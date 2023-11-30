@@ -1,4 +1,5 @@
 import {defs, tiny} from './examples/common.js';
+//import {Text_Line} from './examples/text-demo.js';
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
@@ -20,6 +21,14 @@ class Cube extends Shape {
         // Arrange the vertices into a square shape in texture space too:
         this.indices.push(0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6, 8, 9, 10, 9, 11, 10, 12, 13,
             14, 13, 15, 14, 16, 17, 18, 17, 19, 18, 20, 21, 22, 21, 23, 22);
+
+
+        let bbox_dims = vec3(2, 2, 2);
+        this.aabb_min = vec4(-bbox_dims[0] / 2, -bbox_dims[1] / 2, -bbox_dims[2] / 2, 1);
+        this.aabb_max = vec4(bbox_dims[0] / 2, bbox_dims[1] / 2, bbox_dims[2] / 2, 1);
+        this.model_transform = Mat4.identity();
+
+        this.has_been_clicked = false;
     }
 }
 
@@ -88,7 +97,6 @@ class Base_Scene extends Scene {
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
     }
-
     display(context, program_state) {
         // display():  Called once per frame of animation. Here, the base class's display only does
         // some initial setup.
@@ -147,6 +155,12 @@ export class Fruit_Gravity extends Base_Scene {
         this.is_wave_spawning = true
         this.spawn_number = 1
         this.indiv_spawn_timer = 1
+
+        //mouse controls
+        this.mouse = {"from_center": vec(0, 0)};
+        //score
+        this.score = 0;
+
     }
 
     generate_random_color() {
@@ -254,6 +268,98 @@ export class Fruit_Gravity extends Base_Scene {
         this.animation_active_queue.push(object)
     }
 
+
+
+    my_mouse_down(e, pos, context, program_state){
+        console.log("Helper reached");
+
+
+
+        // The ray is drawn from the near point to far point
+        let pos_ndc_near = vec4(pos[0], pos[1], -1.0, 1.0); // normalized device coords of mouse on near plane
+        let pos_ndc_far  = vec4(pos[0], pos[1],  1.0, 1.0); // normalized device coords of mouse on far plane
+        let center_ndc_near = vec4(0.0, 0.0, -1.0, 1.0); // normalized device coords of center of near plane
+        let P = program_state.projection_transform; // eye space -> projection space
+        let V = program_state.camera_inverse; // world space -> eye space
+
+        // (PV)^-1 = (V^-1)(P^-1) which goes from projection space -> world space
+        let pos_world_near = Mat4.inverse(P.times(V)).times(pos_ndc_near); // world space coords of mouse near plane
+        let pos_world_far  = Mat4.inverse(P.times(V)).times(pos_ndc_far); // world space coords of mouse far plane
+        let center_world_near  = Mat4.inverse(P.times(V)).times(center_ndc_near); // world space coords of center of near plane
+
+        // Perspective division
+        pos_world_near.scale_by(1 / pos_world_near[3]);
+        pos_world_far.scale_by(1 / pos_world_far[3]);
+        center_world_near.scale_by(1 / center_world_near[3]);
+
+        // Get ray
+        const ray_direction = pos_world_far.minus(pos_world_near).normalized();
+
+        // Check if the ray intersects with oriented bounding box of each fruit
+        // I'm using the method described here:
+        // http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
+        let nearest_intersecting_cube = null;
+        let nearest_intersecting_distance = Infinity;
+        let cube = this.shapes.cube;
+
+        let tMin = 0;
+        let tMax = Infinity;
+        let intersection = true;
+
+
+        // console.log(cube.model_transform); // Log the entire model_transform
+        // console.log(cube.model_transform[0]); // Log the first row of the matrix
+        // console.log(cube.model_transform[1]); // Log the second row of the matrix
+        // console.log(cube.model_transform[2]); // Log the third row of the matrix
+
+
+
+        const obb_position_worldspace = vec3(cube.model_transform[0][3], cube.model_transform[1][3], cube.model_transform[2][3]);
+            const delta = obb_position_worldspace.minus(pos_world_near.to3());
+            for (let i = 0; i < 3; i++) {
+                const axis = vec3(cube.model_transform[0][i], cube.model_transform[1][i], cube.model_transform[2][i]); // columns or rows?
+                const e = axis.dot(delta);
+                const f = axis.dot(ray_direction.to3());
+                let t1 = (e + cube.aabb_min[i]) / f;
+                let t2 = (e + cube.aabb_max[i]) / f;
+                if (t1 > t2) {
+                    let temp = t1;
+                    t1 = t2;
+                    t2 = temp;
+                }
+                if (t2 < tMax) {
+                    tMax = t2;
+                }
+                if (t1 > tMin) {
+                    tMin = t1;
+                }
+            }
+            if (tMax < tMin) {
+                intersection = false;
+            }
+            if (intersection && tMin < nearest_intersecting_distance) {
+                nearest_intersecting_cube = cube;
+                nearest_intersecting_distance = tMin;
+            }
+
+        if (nearest_intersecting_cube !== null && !nearest_intersecting_cube.has_been_clicked) {
+            //const z_distance = Math.abs(this.user_position[2] - nearest_intersecting_cube.position[2]);
+            if (nearest_intersecting_cube.shape === this.shapes.bomb) {
+                console.log("BOMB DETECTED");
+            }
+            else{ // normal punch mechanics
+                console.log("FRUIT TOUCHED");
+               // nearest_intersecting_cube.split_object(context, program_state,nearest_intersecting_cube); //FIX
+                //this.score++;
+            }
+        }
+    }
+    //ADDED
+
+
+
+
+
     split_object(context, program_state, object){
         let ver_random_dir = Math.floor(Math.random()*2)
         if(ver_random_dir === 0)
@@ -297,13 +403,49 @@ export class Fruit_Gravity extends Base_Scene {
         this.animation_inactive_queue.push(split_object_2)
     }
 
+
+    displayUI() {
+
+        let score = document.getElementById("score")
+        score.innerHTML = this.score;
+    }
+
     display(context, program_state) {
         super.display(context, program_state);
         const blue = hex_color("#1a9ffa");
         let model_transform = Mat4.identity();
         let t = program_state.animation_time;
 
+
+
         this.rng_spawn(context, program_state, t);
+
+        let canvas = context.canvas;
+
+        //console.log("Mouse down event triggered");
+        const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
+            vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
+                (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
+
+        canvas.addEventListener("mousedown", e => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect()
+            // console.log("e.clientX: " + e.clientX);
+            // console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
+            // console.log("e.clientY: " + e.clientY);
+            // console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
+            // console.log("mouse_position(e): " + mouse_position(e));
+            // this.my_mouse_down(e, mouse_position(e), context, program_state);
+
+
+            //const mouse_pos = mouse_position(e, rect);
+            //this.my_mouse_down(e, mouse_pos, context, program_state);
+
+            this.my_mouse_down(e, mouse_position(e, rect), context, program_state);
+
+        });
+
+
 
         if (this.animation_active_queue.length > 0) {
             for (let i = 0; i < this.animation_active_queue.length; i++) {
@@ -314,7 +456,7 @@ export class Fruit_Gravity extends Base_Scene {
                 let start_time = object.start_time;
                 let end_time = object.end_time;
 
-                if (t <= end_time && t >= start_time) {
+                    if (t <= end_time && t >= start_time) {
                     let animation_process = (t - start_time) / (end_time - start_time);
                     let position = vec4(0,0,0,1.0)
 
@@ -326,7 +468,7 @@ export class Fruit_Gravity extends Base_Scene {
                     object.ver_vel = object.init_ver_vel - object.gravity * (t - start_time) / 1000
 
                     let random = Math.random() * 10
-                    console.log(random)
+                    //console.log(random)
                     if(object.type === "fruit" && random > 9.5 && Math.abs(object.ver_vel) < 2)
                     {
                         this.split_object(context, program_state, object)
@@ -388,5 +530,13 @@ export class Fruit_Gravity extends Base_Scene {
         let border_trans = Mat4.identity()
         border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
         this.shapes.border.draw(context, program_state, border_trans, this.white, "LINES");
+
+
+        this.displayUI();
+        // displaying score
+        // let score_pos = Mat4.identity().times(Mat4.translation(-18, 20, 3)).times(Mat4.scale(0.3, 0.3, 0.3));
+        // let score_string = "Score: " + this.score;
+        // this.shapes.text.set_string(score_string, context.context);
+        // this.shapes.text.draw(context, program_state, score_pos, this.text_image);
     }
 }
