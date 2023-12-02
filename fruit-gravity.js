@@ -138,6 +138,11 @@ export class Fruit_Gravity extends Base_Scene {
         this.min_indiv_spawn_timer = 0.5
         this.max_indiv_spawn_timer = 1.5
 
+        this.game_left_border = -23
+        this.game_right_border = 23
+        this.game_top_border = 23
+        this.game_bottom_border = -3
+
         this.min_spawn_pos = -22
         this.max_spawn_pos = 22
         this.min_peak_hor_pos = -10
@@ -303,73 +308,100 @@ export class Fruit_Gravity extends Base_Scene {
         pos_world_far.scale_by(1 / pos_world_far[3]);
         center_world_near.scale_by(1 / center_world_near[3]);
 
+        let world_space_pos = pos_world_near
+        world_space_pos[0] = world_space_pos[0]/0.74*this.game_right_border
+        world_space_pos[1] = (world_space_pos[1] - 10)/((10.4 - 9.6)/2)*((this.game_top_border - this.game_bottom_border)/2) + 10
+        console.log("world_space_mouse_pos: " + world_space_pos)
+
+        this.detect_cut_fruit(context, program_state, world_space_pos)
         // Get ray
-        const ray_direction = pos_world_far.minus(pos_world_near).normalized();
-
-        // Check if the ray intersects with oriented bounding box of each fruit
-        // http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
-        let nearest_intersecting_cube = null;
-        let nearest_intersecting_distance = Infinity;
-        let cube = this.shapes.cube;
-
-        let tMin = 0;
-        let tMax = Infinity;
-        let intersection = true;
-
-        const obb_position_worldspace = vec3(cube.model_transform[0][3], cube.model_transform[1][3], cube.model_transform[2][3]);
-            const delta = obb_position_worldspace.minus(pos_world_near.to3());
-            for (let i = 0; i < 3; i++) {
-                const axis = vec3(cube.model_transform[0][i], cube.model_transform[1][i], cube.model_transform[2][i]); // columns or rows?
-                const e = axis.dot(delta);
-                const f = axis.dot(ray_direction.to3());
-                let t1 = (e + cube.aabb_min[i]) / f;
-                let t2 = (e + cube.aabb_max[i]) / f;
-                console.log("aabb_min: ");
-                console.log(cube.aabb_min[i]+e);
-                console.log("aabb_max: ");
-                console.log(cube.aabb_min[i]+e);
-                if (t1 > t2) {
-                    let temp = t1;
-                    t1 = t2;
-                    t2 = temp;
-                    //console.log("false? 1");
-                }
-                if (t2 < tMax) {
-                    tMax = t2;
-                    //console.log("false? 2");
-                }
-                if (t1 > tMin) {
-                    tMin = t1;
-                    //console.log("false? 3");
-                }
-            }
-            if (tMax < tMin) {
-                //console.log("false? 4");
-                intersection = false;
-            }
-            if (intersection && tMin < nearest_intersecting_distance) {
-                nearest_intersecting_cube = cube;
-                nearest_intersecting_distance = tMin;
-                console.log("true?");
-            }
-
-        if (nearest_intersecting_cube !== null && !nearest_intersecting_cube.has_been_clicked) {
-            console.log("reached");
-            nearest_intersecting_cube.has_been_clicked = true;
-            if (nearest_intersecting_cube.shape === this.shapes.bomb) {
-                console.log("BOMB DETECTED");
-            }
-            else{
-                console.log("FRUIT TOUCHED");
-                 this.score++;
-            }
-        }
+        // const ray_direction = pos_world_far.minus(pos_world_near).normalized();
+        //
+        // // Check if the ray intersects with oriented bounding box of each fruit
+        // // http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
+        // let nearest_intersecting_cube = null;
+        // let nearest_intersecting_distance = Infinity;
+        // let cube = this.shapes.cube;
+        //
+        // let tMin = 0;
+        // let tMax = Infinity;
+        // let intersection = true;
+        //
+        // const obb_position_worldspace = vec3(cube.model_transform[0][3], cube.model_transform[1][3], cube.model_transform[2][3]);
+        //     const delta = obb_position_worldspace.minus(pos_world_near.to3());
+        //     for (let i = 0; i < 3; i++) {
+        //         const axis = vec3(cube.model_transform[0][i], cube.model_transform[1][i], cube.model_transform[2][i]); // columns or rows?
+        //         const e = axis.dot(delta);
+        //         const f = axis.dot(ray_direction.to3());
+        //         let t1 = (e + cube.aabb_min[i]) / f;
+        //         let t2 = (e + cube.aabb_max[i]) / f;
+        //         // console.log("aabb_min: ");
+        //         // console.log(cube.aabb_min[i]+e);
+        //         // console.log("aabb_max: ");
+        //         // console.log(cube.aabb_min[i]+e);
+        //         if (t1 > t2) {
+        //             let temp = t1;
+        //             t1 = t2;
+        //             t2 = temp;
+        //             //console.log("false? 1");
+        //         }
+        //         if (t2 < tMax) {
+        //             tMax = t2;
+        //             //console.log("false? 2");
+        //         }
+        //         if (t1 > tMin) {
+        //             tMin = t1;
+        //             //console.log("false? 3");
+        //         }
+        //     }
+        //     if (tMax < tMin) {
+        //         //console.log("false? 4");
+        //         intersection = false;
+        //     }
+        //     if (intersection && tMin < nearest_intersecting_distance) {
+        //         nearest_intersecting_cube = cube;
+        //         nearest_intersecting_distance = tMin;
+        //         console.log("true?");
+        //     }
+        //
+        // if (nearest_intersecting_cube !== null && !nearest_intersecting_cube.has_been_clicked) {
+        //     console.log("reached");
+        //     nearest_intersecting_cube.has_been_clicked = true;
+        //     if (nearest_intersecting_cube.shape === this.shapes.bomb) {
+        //         console.log("BOMB DETECTED");
+        //     }
+        //     else{
+        //         console.log("FRUIT TOUCHED");
+        //          this.score++;
+        //     }
+        // }
     }
     //ADDED
 
+    detect_cut_fruit(context, program_state, position){
+        if (this.animation_active_queue.length > 0) {
+            for (let i = 0; i < this.animation_active_queue.length; i++) {
+                let object = this.animation_active_queue[i];
+
+                //get object's current center position using object.position
+
+                //maybe do ray casting here? you can use position[0] and position[1] to get
+                //x,y of mouse click in world space
+
+                //detect if ray collides with any object in animation_active_queue
+                //you can check what kind of object has been collided with using object.type
+                    //"bomb" and "fruit"
+
+                //all objects that are where mouse is when clicked should be split/explode if it is a bomb,
+                //not just the first object
 
 
 
+
+
+            }
+        }
+    }
 
     split_object(context, program_state, object){
         let ver_random_dir = Math.floor(Math.random()*2)
@@ -440,11 +472,11 @@ export class Fruit_Gravity extends Base_Scene {
         canvas.addEventListener("mousedown", e => {
             e.preventDefault();
             const rect = canvas.getBoundingClientRect()
-            console.log("e.clientX: " + e.clientX);
-            console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
-            console.log("e.clientY: " + e.clientY);
-            console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
-            console.log("mouse_position(e): " + mouse_position(e));
+            // console.log("e.clientX: " + e.clientX);
+            // console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
+            // console.log("e.clientY: " + e.clientY);
+            // console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
+            // console.log("mouse_position(e): " + mouse_position(e));
            // this.my_mouse_down(e, mouse_position(e), context, program_state);
 
 
@@ -543,7 +575,9 @@ export class Fruit_Gravity extends Base_Scene {
         }
 
         let border_trans = Mat4.identity()
-        border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
+        //border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
+        border_trans = border_trans.times(Mat4.translation(0, (this.game_top_border + this.game_bottom_border)/2, 0)).times(Mat4.scale((this.game_right_border - this.game_left_border)/2, (this.game_top_border - this.game_bottom_border)/2, 1))
+
         this.shapes.border.draw(context, program_state, border_trans, this.white, "LINES");
 
 

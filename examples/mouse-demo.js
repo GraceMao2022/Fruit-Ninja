@@ -98,7 +98,7 @@ export class Mouse_Demo extends Scene {
         pos_world_near.scale_by(1 / pos_world_near[3]);
         pos_world_far.scale_by(1 / pos_world_far[3]);
         center_world_near.scale_by(1 / center_world_near[3]);
-        // console.log(pos_world_near);
+        console.log(pos_world_far);
         // console.log(pos_world_far);
         //
         // Do whatever you want
