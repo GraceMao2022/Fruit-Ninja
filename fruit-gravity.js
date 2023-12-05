@@ -1,10 +1,11 @@
 import {defs, tiny} from './examples/common.js';
-//import {Text_Line} from './examples/text-demo.js';
+import {Text_Line} from './examples/text-demo.js'
+import {Body} from './examples/collisions-demo.js'
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,Texture
 } = tiny;
-const {Triangle, Square, Tetrahedron, Windmill, Subdivision_Sphere} = defs;
+const {Triangle, Square, Tetrahedron, Windmill, Subdivision_Sphere, Textured_Phong} = defs;
 
 class Cube extends Shape {
     constructor() {
@@ -23,12 +24,12 @@ class Cube extends Shape {
             14, 13, 15, 14, 16, 17, 18, 17, 19, 18, 20, 21, 22, 21, 23, 22);
 
 
-        let bbox_dims = vec3(2, 2, 2);
-        this.aabb_min = vec4(-bbox_dims[0] / 2, -bbox_dims[1] / 2, -bbox_dims[2] / 2, 1);
-        this.aabb_max = vec4(bbox_dims[0] / 2, bbox_dims[1] / 2, bbox_dims[2] / 2, 1);
-        this.model_transform = Mat4.identity();
+        // let bbox_dims = vec3(2, 2, 2);
+        // this.aabb_min = vec4(-bbox_dims[0] / 2, -bbox_dims[1] / 2, -bbox_dims[2] / 2, 1);
+        // this.aabb_max = vec4(bbox_dims[0] / 2, bbox_dims[1] / 2, bbox_dims[2] / 2, 1);
+        // this.model_transform = Mat4.identity();
 
-        this.has_been_clicked = false;
+        //this.has_been_clicked = false;
     }
 }
 
@@ -86,16 +87,116 @@ class Base_Scene extends Scene {
             'cube': new Cube(),
             'border': new Box(),
             'cube_strip': new Cube_Single_Strip(),
-            'bomb': new Subdivision_Sphere(4)
+            'bomb': new Subdivision_Sphere(4),
+            'bullet': new defs.Subdivision_Sphere(2),
         };
 
         // *** Materials
         this.materials = {
             plastic: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+            start_background:new Material(new Textured_Phong(1), {
+                color: color(0, 0, 0, 1),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/title.png")}),
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
+
+        // Make simpler dummy shapes for representing all other shapes during collisions:
+        this.colliders = [
+            {intersect_test: Body.intersect_sphere, points: new defs.Subdivision_Sphere(1), leeway: .5},
+            {intersect_test: Body.intersect_sphere, points: new defs.Subdivision_Sphere(2), leeway: .3},
+            {intersect_test: Body.intersect_cube, points: new defs.Cube(), leeway: .1}
+        ];
+        // change this to switch to a different dummy shape
+        this.collider_selection = 0;
+
+
+        // position of arrow
+        this.position = 0;
+
+        // for spawning new bullets
+        this.shot = false;
+        this.bullet_cooldown = 10; //??
+        this.bullet_counter = 0;
+
+
+        // locations of current bullets
+        this.bullets = [];
+        this.bullet_velocity = vec3(0, 1, 0);
+
+        this.gameOver = false;
+
+    }
+
+    draw_bullet(context, program_state) {
+        for (let b of this.bullets) {
+            this.shapes.bullet.draw(context, program_state,
+                b.drawn_location.times(Mat4.scale(0.5, 0.5, 0.5)),
+                this.materials.plastic);
+        }
+    }
+
+    draw_player(context, program_state, model_transform) {
+        //put draw of arrow or whatever
+        this.shapes.cube.draw(context, program_state,                                               // Top Half
+            model_transform.times(Mat4.translation(0,0,-1))
+                .times(Mat4.scale(2,1.5,1)),
+            this.materials.plastic);
+
+    }
+
+    add_bullet(position)
+    {
+        this.bullets.push(new Body(this.shapes.bullet, this.materials.bullet, vec3(0.5, 0.5, 0.5))
+            .emplace(Mat4.translation(position, 0, 0), this.bullet_velocity, 0));
+        let a = this.bullets.at(this.bullets.length-1);
+        a.inverse = Mat4.inverse(a.drawn_location);
+    }
+
+    remove_bullet(index)
+    {
+        if (index < this.bullets.length)
+            this.bullets.splice(index, 1);
+    }
+
+    check_collisions()
+    {
+        const collider = this.colliders[this.collider_selection];
+        console.log("check coll");
+        for (let a of this.bullets)
+        {
+            //for (let b of this.enemies)
+            //{
+            //if (this.animation_active_queue.length > 0) {
+                for (let i = 0; i < this.animation_active_queue.length; i++) {
+                    let object = this.animation_active_queue[i];
+
+                    if (a.check_if_colliding(object, collider))
+                    {
+                        this.remove_bullet(this.bullets.indexOf(a));
+                        if (object.shape === this.shapes.bomb) {
+                            console.log("BOMB DETECTED");
+                            this.gameOver = true;
+                        }
+                        else{
+                            console.log("FRUIT TOUCHED");
+                            //add splitting
+                            this.score++;
+                        }
+
+                        //ADD BOMB VS FRUIT CODE
+                        this.score++;
+                    }
+                }
+            //}
+                // if bullet has collided with enemy
+
+            //}
+            if (a.drawn_location[1][3] > 22)
+                this.remove_bullet(this.bullets.indexOf(a));
+        }
     }
     display(context, program_state) {
         // display():  Called once per frame of animation. Here, the base class's display only does
@@ -170,8 +271,21 @@ export class Fruit_Gravity extends Base_Scene {
     }
 
     make_control_panel() {
-        this.key_triggered_button("Start Game", [' '], () =>{
-            this.stopped = !this.stopped;
+        this.key_triggered_button("Left", ['j'], () => {
+            if (this.gameStarted === true  && this.position > -20)
+                this.position = this.position - 1;
+        });
+        this.key_triggered_button("Right", ['l'], () => {
+            if (this.gameStarted === true  && this.position < 20)
+                this.position = this.position + 1;
+        });
+        this.key_triggered_button("Shoot", ['k'], () => {
+            if (this.gameStarted === true && this.bullet_counter == this.bullet_cooldown) {
+                this.shot = true;
+                this.bullet_counter = 0;
+            }
+        });
+        this.key_triggered_button("Start Game", ['Enter'], () =>{
             this.gameStarted = true;
         });
     }
@@ -179,6 +293,45 @@ export class Fruit_Gravity extends Base_Scene {
     reset_game(){
         this.score = 0;
         this.gameStarted = false;
+        this.gameOver = false;
+
+
+        // position of cat
+        this.position = 0;
+
+        // for spawning new bullets
+        this.shot = false;
+
+        this.stopped = true;
+        // this.mainscreen = true;
+        this.gameStarted = false;
+
+
+        this.bullet_counter = 0;
+
+       //might need to add clean up fruit as well idk?
+        for (let i = this.bullets.length-1; i>=0; i--)
+        {
+            this.remove_bullet(i);
+        }
+    }
+
+    update_state()
+    {
+        for (let a of this.bullets)
+        {
+            a.drawn_location = a.drawn_location.times(Mat4.translation(0, 1, 0));
+            a.inverse = Mat4.inverse(a.drawn_location);
+        }
+        //this.update_enemy_state();
+    }
+
+    cooling_bullet()
+    {
+        if (this.bullet_counter != this.bullet_cooldown)
+        {
+            this.bullet_counter = this.bullet_counter + 1;
+        }
     }
 
     generate_random_color() {
@@ -460,7 +613,6 @@ export class Fruit_Gravity extends Base_Scene {
         let t = program_state.animation_time;
 
 
-
         this.rng_spawn(context, program_state, t);
 
         let canvas = context.canvas;
@@ -477,9 +629,7 @@ export class Fruit_Gravity extends Base_Scene {
             // console.log("e.clientY: " + e.clientY);
             // console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
             // console.log("mouse_position(e): " + mouse_position(e));
-           // this.my_mouse_down(e, mouse_position(e), context, program_state);
-
-
+            // this.my_mouse_down(e, mouse_position(e), context, program_state);
             //const mouse_pos = mouse_position(e, rect);
             //this.my_mouse_down(e, mouse_pos, context, program_state);
 
@@ -487,100 +637,133 @@ export class Fruit_Gravity extends Base_Scene {
 
         });
 
-        // if(!this.gameStarted){ //REMOVE
-        //     let center = Mat4.identity().times(Mat4.translation(-7, this.top_of_screen-15, 3)).times(Mat4.scale(0.5, 0.5, 0.5));
-        //     let space_string = "Press space to start";
-        //     this.shapes.text.set_string(space_string, context.context);
-        //     this.shapes.text.draw(context, program_state, center, this.text_image);
-        // }
+        if (!this.gameStarted) { //REMOVE
+            //let start_screen_transform = Mat4.scale(20, 20, 1);
+            //this.shapes.cube.draw(context, program_state, start_screen_transform, this.materials.start_background);
 
-        if (this.animation_active_queue.length > 0) {
-            for (let i = 0; i < this.animation_active_queue.length; i++) {
-                let object = this.animation_active_queue[i];
+        } else {
+            if (this.animation_active_queue.length > 0) {
+                for (let i = 0; i < this.animation_active_queue.length; i++) {
+                    let object = this.animation_active_queue[i];
 
-                let from = object.from;
+                    let from = object.from;
 
-                let start_time = object.start_time;
-                let end_time = object.end_time;
+                    let start_time = object.start_time;
+                    let end_time = object.end_time;
 
                     if (t <= end_time && t >= start_time) {
-                    let animation_process = (t - start_time) / (end_time - start_time);
-                    let position = vec4(0,0,0,1.0)
+                        let animation_process = (t - start_time) / (end_time - start_time);
+                        let position = vec4(0,0,0,1.0)
 
-                    position[0] = from[0] + object.init_hor_vel * (t - start_time) / 1000
-                    position[1] = from[1] + object.init_ver_vel * (t - start_time) / 1000 -
-                        0.5 * object.gravity * ((t - start_time) / 1000) ** 2;
+                        position[0] = from[0] + object.init_hor_vel * (t - start_time) / 1000
+                        position[1] = from[1] + object.init_ver_vel * (t - start_time) / 1000 -
+                            0.5 * object.gravity * ((t - start_time) / 1000) ** 2;
 
-                    object.position = position
-                    object.ver_vel = object.init_ver_vel - object.gravity * (t - start_time) / 1000
+                        object.position = position
+                        object.ver_vel = object.init_ver_vel - object.gravity * (t - start_time) / 1000
 
-                    let random = Math.random() * 10
-                    //console.log(random)
-                    if(object.type === "fruit" && random > 9.5 && Math.abs(object.ver_vel) < 2)
-                    {
-                        this.split_object(context, program_state, object)
-                        this.animation_active_queue.splice(i, 1)
-                        i--
-                    }
-                    else
-                    {
-                        let model_trans = Mat4.translation(position[0], position[1], position[2])
-                            .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
-
-                        if(object.type === "fruit")
-                            this.shapes.cube.draw(context, program_state, model_trans, this.materials.plastic.override({color:object.color}));
+                        let random = Math.random() * 10
+                        //console.log(random)
+                        if(object.type === "fruit" && random > 9.5 && Math.abs(object.ver_vel) < 2)
+                        {
+                            this.split_object(context, program_state, object)
+                            this.animation_active_queue.splice(i, 1)
+                            i--
+                        }
                         else
-                            this.shapes.bomb.draw(context, program_state, model_trans, this.materials.plastic.override({color:object.color}));
+                        {
+                            let model_trans = Mat4.translation(position[0], position[1], position[2])
+                                .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
+
+                            if(object.type === "fruit")
+                                this.shapes.cube.draw(context, program_state, model_trans, this.materials.plastic.override({color:object.color}));
+                            else
+                                this.shapes.bomb.draw(context, program_state, model_trans, this.materials.plastic.override({color:object.color}));
+                        }
                     }
                 }
             }
-        }
-        if (this.animation_inactive_queue.length > 0) {
-            for (let i = 0; i < this.animation_inactive_queue.length; i++) {
-                let split_object = this.animation_inactive_queue[i];
+            if (this.animation_inactive_queue.length > 0) {
+                for (let i = 0; i < this.animation_inactive_queue.length; i++) {
+                    let split_object = this.animation_inactive_queue[i];
 
-                let from = split_object.from;
+                    let from = split_object.from;
 
-                let start_time = split_object.start_time;
-                let end_time = split_object.end_time;
+                    let start_time = split_object.start_time;
+                    let end_time = split_object.end_time;
 
-                if (t <= end_time && t >= start_time) {
-                    let animation_process = (t - start_time) / (end_time - start_time);
-                    let position = vec4(0,0,0,1.0)
+                    if (t <= end_time && t >= start_time) {
+                        let animation_process = (t - start_time) / (end_time - start_time);
+                        let position = vec4(0,0,0,1.0)
 
-                    position[0] = from[0] + split_object.init_hor_vel * (t - start_time) / 1000
-                    position[1] = from[1] + split_object.init_ver_vel * (t - start_time) / 1000 -
-                        0.5 * split_object.gravity * ((t - start_time) / 1000) ** 2;
+                        position[0] = from[0] + split_object.init_hor_vel * (t - start_time) / 1000
+                        position[1] = from[1] + split_object.init_ver_vel * (t - start_time) / 1000 -
+                            0.5 * split_object.gravity * ((t - start_time) / 1000) ** 2;
 
 
-                    let model_trans = Mat4.translation(position[0], position[1], position[2])
-                        .times(Mat4.rotation(split_object.rot_dir * animation_process * 20, .3, .6, .2)).times(Mat4.scale(0.5, 1, 1))
+                        let model_trans = Mat4.translation(position[0], position[1], position[2])
+                            .times(Mat4.rotation(split_object.rot_dir * animation_process * 20, .3, .6, .2)).times(Mat4.scale(0.5, 1, 1))
 
-                    this.shapes.cube.draw(context, program_state, model_trans, this.materials.plastic.override({color:split_object.color}));
+                        this.shapes.cube.draw(context, program_state, model_trans, this.materials.plastic.override({color:split_object.color}));
+                    }
                 }
             }
-        }
-        // remove finished animation
-        while (this.animation_active_queue.length > 0 || this.animation_inactive_queue.length > 0) {
-            if ((this.animation_active_queue.length > 0 && t > this.animation_active_queue[0].end_time) ||
-                (this.animation_inactive_queue.length > 0 && t > this.animation_inactive_queue[0].end_time)) {
-                if(this.animation_active_queue.length > 0 && t > this.animation_active_queue[0].end_time)
-                    this.animation_active_queue.shift();
-                if(this.animation_inactive_queue.length > 0 && t > this.animation_inactive_queue[0].end_time)
-                    this.animation_inactive_queue.shift();
+            // remove finished animation
+            while (this.animation_active_queue.length > 0 || this.animation_inactive_queue.length > 0) {
+                if ((this.animation_active_queue.length > 0 && t > this.animation_active_queue[0].end_time) ||
+                    (this.animation_inactive_queue.length > 0 && t > this.animation_inactive_queue[0].end_time)) {
+                    if(this.animation_active_queue.length > 0 && t > this.animation_active_queue[0].end_time)
+                        this.animation_active_queue.shift();
+                    if(this.animation_inactive_queue.length > 0 && t > this.animation_inactive_queue[0].end_time)
+                        this.animation_inactive_queue.shift();
+                }
+                else {
+                    break;
+                }
             }
-            else {
-                break;
+
+            let border_trans = Mat4.identity()
+            //border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
+            border_trans = border_trans.times(Mat4.translation(0, (this.game_top_border + this.game_bottom_border)/2, 0)).times(Mat4.scale((this.game_right_border - this.game_left_border)/2, (this.game_top_border - this.game_bottom_border)/2, 1))
+
+            this.shapes.border.draw(context, program_state, border_trans, this.white, "LINES");
+
+
+
+            if (this.shot) {
+                this.shot = false;
+                this.add_bullet(this.position);
             }
+
+            this.update_state();
+            //this.check_collisions(); //MAIN ISSUE
+            if(this.gameOver){
+                this.reset_game();
+            }
+            this.cooling_bullet();
+
+            model_transform = model_transform.times(Mat4.translation(this.position, 0, 0));
+            this.draw_player(context, program_state, model_transform
+                .times(Mat4.scale(0.5,0.5,0.5))
+                .times(Mat4.rotation(Math.PI/2,1,0,0)));
+            this.draw_bullet(context, program_state);
+            this.displayUI();
+
         }
-
-        let border_trans = Mat4.identity()
-        //border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
-        border_trans = border_trans.times(Mat4.translation(0, (this.game_top_border + this.game_bottom_border)/2, 0)).times(Mat4.scale((this.game_right_border - this.game_left_border)/2, (this.game_top_border - this.game_bottom_border)/2, 1))
-
-        this.shapes.border.draw(context, program_state, border_trans, this.white, "LINES");
+    }
+}
 
 
-        this.displayUI();
+
+class Start_Background_Shader extends Textured_Phong {
+    fragment_glsl_code() {
+        // ********* FRAGMENT SHADER *********
+        return this.shared_glsl_code() + `        
+        varying vec2 f_tex_coord;
+
+        void main(){
+             gl_FragColor = vec4(shape_color.xyz, .1);
+                        
+        }`;
     }
 }
