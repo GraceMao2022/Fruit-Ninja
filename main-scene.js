@@ -12,6 +12,7 @@ import {Control_Demo} from "./examples/control-demo.js"
 import {Mouse_Demo} from "./examples/mouse-demo.js"
 import {Gravity} from "./gravity.js"
 import {Fruit_Gravity} from "./fruit-gravity.js"
+import {Fruit_Textures} from "./fruit-textures.js";
 
 // Pull these names into this module's scope for convenience:
 const {
@@ -42,7 +43,8 @@ Object.assign(defs,
     {Mouse_Demo},
     {Control_Demo},
     {Gravity},
-    {Fruit_Gravity});
+    {Fruit_Gravity},
+    {Fruit_Textures});
 
 // ******************** End extra step
 
@@ -50,7 +52,7 @@ Object.assign(defs,
 
 // const Main_Scene = Control_Demo;
 // const Main_Scene = Mouse_Demo;
-const Main_Scene = Fruit_Gravity;
+const Main_Scene = Fruit_Textures;
 const Additional_Scenes = [];
 
 export {Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs}
