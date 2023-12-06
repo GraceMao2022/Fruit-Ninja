@@ -52,7 +52,7 @@ Object.assign(defs,
 
 // const Main_Scene = Control_Demo;
 // const Main_Scene = Mouse_Demo;
-const Main_Scene = Fruit_Textures;
+const Main_Scene = Fruit_Gravity;
 const Additional_Scenes = [];
 
 export {Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs}

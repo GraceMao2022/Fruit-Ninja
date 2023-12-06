@@ -1,9 +1,9 @@
 import {defs, tiny} from './examples/common.js';
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
 } = tiny;
-const {Triangle, Square, Tetrahedron, Windmill, Subdivision_Sphere} = defs;
+const {Triangle, Square, Tetrahedron, Windmill, Subdivision_Sphere, Textured_Phong} = defs;
 
 class Cube extends Shape {
     constructor() {
@@ -77,13 +77,114 @@ class Base_Scene extends Scene {
             'cube': new Cube(),
             'border': new Box(),
             'cube_strip': new Cube_Single_Strip(),
-            'bomb': new Subdivision_Sphere(4)
+            'watermelon': new Subdivision_Sphere(4),
+            'watermelon_inside': new defs.Regular_2D_Polygon(30, 30),
+            'orange': new Subdivision_Sphere(4),
+            'orange_inside': new defs.Regular_2D_Polygon(30, 30),
+            'peach': new Subdivision_Sphere(4),
+            'peach_inside': new defs.Regular_2D_Polygon(30, 30),
+            'apple': new Subdivision_Sphere(4),
+            'apple_inside': new defs.Regular_2D_Polygon(30, 30),
+            'mango': new Subdivision_Sphere(4),
+            'mango_inside': new defs.Regular_2D_Polygon(30, 30),
+            'bomb': new Subdivision_Sphere(4),
+            'background': new Square(),
         };
 
         // *** Materials
         this.materials = {
             plastic: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+            watermelon_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/watermelon_texture.jpg", "NEAREST")
+            }),
+            half_watermelon_texture: new Material(new Hemi_Sphere(1.0), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/watermelon_texture.jpg", "NEAREST")
+            }),
+            watermelon_inside_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/watermelon_inside.jpeg", "NEAREST")
+            }),
+            orange_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 0.1,
+                texture: new Texture("assets/orange_skin.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            half_orange_texture: new Material(new Hemi_Sphere(10.0), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 0.1,
+                texture: new Texture("assets/orange_skin.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            orange_inside_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/orange_inside.jpeg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            peach_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 0.1,
+                texture: new Texture("assets/peach_skin.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            half_peach_texture: new Material(new Hemi_Sphere(1.0), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 0.1,
+                texture: new Texture("assets/peach_skin.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            peach_inside_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/peach_inside.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            apple_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 1.0,
+                texture: new Texture("assets/apple_skin.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            half_apple_texture: new Material(new Hemi_Sphere(1.0), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 1.0,
+                texture: new Texture("assets/apple_skin.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            apple_inside_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/apple_inside.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            mango_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 1.0,
+                texture: new Texture("assets/mango_skin.jpeg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            half_mango_texture: new Material(new Hemi_Sphere(1.0), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 1.0,
+                texture: new Texture("assets/mango_skin.jpeg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            mango_inside_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/mango_inside.jpeg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            bomb_texture: new Material(new defs.Phong_Shader(),
+                {ambient: 1, specularity: 1, color: hex_color("#000000")}),
+            background_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 0.0,
+                texture: new Texture("assets/cutting_board.jpg", "LINEAR_MIPMAP_LINEAR")}),
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
@@ -149,14 +250,157 @@ export class Fruit_Gravity extends Base_Scene {
         this.indiv_spawn_timer = 1
     }
 
-    generate_random_color() {
-        return color(Math.random(), Math.random(), Math.random(), 1.0)
+    my_mouse_down(e, pos, context, program_state){
+        console.log("Helper");
+
+        // The ray is drawn from the near point to far point
+        let pos_ndc_near = vec4(pos[0], pos[1], -1.0, 1.0); // normalized device coords of mouse on near plane
+        let pos_ndc_far  = vec4(pos[0], pos[1],  1.0, 1.0); // normalized device coords of mouse on far plane
+        let center_ndc_near = vec4(0.0, 0.0, -1.0, 1.0); // normalized device coords of center of near plane
+        let P = program_state.projection_transform; // eye space -> projection space
+        let V = program_state.camera_inverse; // world space -> eye space
+
+        // (PV)^-1 = (V^-1)(P^-1) which goes from projection space -> world space
+        let pos_world_near = Mat4.inverse(P.times(V)).times(pos_ndc_near); // world space coords of mouse near plane
+        let pos_world_far  = Mat4.inverse(P.times(V)).times(pos_ndc_far); // world space coords of mouse far plane
+        let center_world_near  = Mat4.inverse(P.times(V)).times(center_ndc_near); // world space coords of center of near plane
+
+        // Perspective division
+        pos_world_near.scale_by(1 / pos_world_near[3]);
+        pos_world_far.scale_by(1 / pos_world_far[3]);
+        center_world_near.scale_by(1 / center_world_near[3]);
+
+        let world_space_pos = pos_world_near
+        world_space_pos[0] = world_space_pos[0]/0.74*this.game_right_border
+        world_space_pos[1] = (world_space_pos[1] - 10)/((10.4 - 9.6)/2)*((this.game_top_border - this.game_bottom_border)/2) + 10
+        console.log("world_space_mouse_pos: " + world_space_pos)
+
+        this.detect_cut_fruit(context, program_state, world_space_pos)
+        // Get ray
+        // const ray_direction = pos_world_far.minus(pos_world_near).normalized();
+        //
+        // // Check if the ray intersects with oriented bounding box of each fruit
+        // // http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
+        // let nearest_intersecting_cube = null;
+        // let nearest_intersecting_distance = Infinity;
+        // let cube = this.shapes.cube;
+        //
+        // let tMin = 0;
+        // let tMax = Infinity;
+        // let intersection = true;
+        //
+        // const obb_position_worldspace = vec3(cube.model_transform[0][3], cube.model_transform[1][3], cube.model_transform[2][3]);
+        //     const delta = obb_position_worldspace.minus(pos_world_near.to3());
+        //     for (let i = 0; i < 3; i++) {
+        //         const axis = vec3(cube.model_transform[0][i], cube.model_transform[1][i], cube.model_transform[2][i]); // columns or rows?
+        //         const e = axis.dot(delta);
+        //         const f = axis.dot(ray_direction.to3());
+        //         let t1 = (e + cube.aabb_min[i]) / f;
+        //         let t2 = (e + cube.aabb_max[i]) / f;
+        //         // console.log("aabb_min: ");
+        //         // console.log(cube.aabb_min[i]+e);
+        //         // console.log("aabb_max: ");
+        //         // console.log(cube.aabb_min[i]+e);
+        //         if (t1 > t2) {
+        //             let temp = t1;
+        //             t1 = t2;
+        //             t2 = temp;
+        //             //console.log("false? 1");
+        //         }
+        //         if (t2 < tMax) {
+        //             tMax = t2;
+        //             //console.log("false? 2");
+        //         }
+        //         if (t1 > tMin) {
+        //             tMin = t1;
+        //             //console.log("false? 3");
+        //         }
+        //     }
+        //     if (tMax < tMin) {
+        //         //console.log("false? 4");
+        //         intersection = false;
+        //     }
+        //     if (intersection && tMin < nearest_intersecting_distance) {
+        //         nearest_intersecting_cube = cube;
+        //         nearest_intersecting_distance = tMin;
+        //         console.log("true?");
+        //     }
+        //
+        // if (nearest_intersecting_cube !== null && !nearest_intersecting_cube.has_been_clicked) {
+        //     console.log("reached");
+        //     nearest_intersecting_cube.has_been_clicked = true;
+        //     if (nearest_intersecting_cube.shape === this.shapes.bomb) {
+        //         console.log("BOMB DETECTED");
+        //     }
+        //     else{
+        //         console.log("FRUIT TOUCHED");
+        //          this.score++;
+        //     }
+        // }
     }
+    //ADDED
+
+    detect_cut_fruit(context, program_state, position){
+        if (this.animation_active_queue.length > 0) {
+            for (let i = 0; i < this.animation_active_queue.length; i++) {
+                let object = this.animation_active_queue[i];
+
+                //get object's current center position using object.position
+                //if mouse position is within object, split it
+                if(object.type === "watermelon")
+                {
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1)
+                        this.split_object(context, program_state, object)
+                }
+                else if(object.type === "mango")
+                {
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.7)
+                        this.split_object(context, program_state, object)
+                }
+                else
+                {
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.5)
+                        this.split_object(context, program_state, object)
+                }
+
+
+                //maybe do ray casting here? you can use position[0] and position[1] to get
+                //x,y of mouse click in world space
+
+                //detect if ray collides with any object in animation_active_queue
+                //you can check what kind of object has been collided with using object.type
+                //"bomb" and "fruit"
+
+                //all objects that are where mouse is when clicked should be split/explode if it is a bomb,
+                //not just the first object
+
+
+
+
+
+            }
+        }
+    }
+
+    // generate_random_color() {
+    //     return color(Math.random(), Math.random(), Math.random(), 1.0)
+    // }
 
     generate_type_fruit() {
         let random = Math.random() * 10
         if(random < 8)
-            return "fruit"
+        {
+            if(random < 1.6)
+                return "apple"
+            else if(random < 3.2)
+                return "peach"
+            else if(random < 4.8)
+                return "watermelon"
+            else if(random < 6.4)
+                return "orange"
+            else
+                return "mango"
+        }
         return "bomb"
     }
     rng_spawn(context, program_state, t){
@@ -199,7 +443,7 @@ export class Fruit_Gravity extends Base_Scene {
                 let init_ver_vel = Math.sqrt(2 * this.gravity * (peak_ver_pos - (-10)))
                 let time_to_peak = init_ver_vel/(this.gravity)
                 let init_hor_vel = (peak_hor_pos - init_hor_pos)/time_to_peak
-                this.spawn_object(context, program_state, this.generate_type_fruit(), vec4(init_hor_pos, -10.0, 0.0, 1.0), init_hor_vel, init_ver_vel, this.generate_random_color())
+                this.spawn_object(context, program_state, this.generate_type_fruit(), vec4(init_hor_pos, -10.0, 0.0, 1.0), init_hor_vel, init_ver_vel)
                 this.spawn_number--;
             }
         }
@@ -218,7 +462,7 @@ export class Fruit_Gravity extends Base_Scene {
         }
 
     }
-    spawn_object(context, program_state, type, from, init_hor_vel, init_ver_vel, color) {
+    spawn_object(context, program_state, type, from, init_hor_vel, init_ver_vel) {
         // let pos_ndc_near = vec4(1.0, pos[1], -1.0, 1.0);
         // //let pos_ndc_far  = vec4(pos[0], pos[1],  1.0, 1.0);
         // let pos_ndc_far  = vec4(1.0, 0.5, 1.0, 1.0);
@@ -244,10 +488,10 @@ export class Fruit_Gravity extends Base_Scene {
             init_ver_vel: init_ver_vel,
             hor_vel: init_hor_vel,
             ver_vel: init_ver_vel,
+            rot_angle: 0,
             start_time: program_state.animation_time,
             end_time: program_state.animation_time + 5000,
             type: type,
-            color: color,
             gravity: this.gravity
         }
 
@@ -272,11 +516,11 @@ export class Fruit_Gravity extends Base_Scene {
             //to: to,
             init_hor_vel: -4,
             init_ver_vel: ver_random_dir * object.ver_vel,
+            init_rot_angle: object.rot_angle[0],
             rot_dir: rot_random_dir * 1,
             start_time: program_state.animation_time,
             end_time: object.end_time,
             type: object.type,
-            color: object.color,
             gravity: this.split_gravity
         }
 
@@ -285,11 +529,11 @@ export class Fruit_Gravity extends Base_Scene {
             //to: to,
             init_hor_vel: 4,
             init_ver_vel: -1 * ver_random_dir * object.ver_vel,
+            init_rot_angle: object.rot_angle[0],
             rot_dir: rot_random_dir * -1,
             start_time: program_state.animation_time,
             end_time: object.end_time,
             type: object.type,
-            color: object.color,
             gravity: this.split_gravity
         }
 
@@ -297,11 +541,126 @@ export class Fruit_Gravity extends Base_Scene {
         this.animation_inactive_queue.push(split_object_2)
     }
 
+
+    draw_fruit(context, program_state, translate, rotate, type){
+        switch(type){
+            case "apple":
+                let apple_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
+                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(1, 1,1));
+                this.shapes.apple.draw(context, program_state, apple_model_transform, this.materials.apple_texture)
+                break;
+            case "peach":
+                let peach_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
+                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(1, 1,1));
+                this.shapes.peach.draw(context, program_state, peach_model_transform, this.materials.peach_texture)
+                break;
+            case "watermelon":
+                let watermelon_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
+                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(2, 2.5,2));
+                this.shapes.watermelon.arrays.texture_coord.forEach(
+                    (v, i, l) => {
+                        v[0] = v[0] * 2
+                    }
+                )
+                this.shapes.watermelon.draw(context, program_state, watermelon_model_transform, this.materials.watermelon_texture)
+                break;
+            case "orange":
+                let orange_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
+                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(1, 1,1));
+                this.shapes.orange.arrays.texture_coord.forEach(
+                    (v, i, l) => {
+                        v[0] = v[0] * 10
+                        v[1] = v[1] * 10
+                    }
+                )
+                this.shapes.orange.draw(context, program_state, orange_model_transform, this.materials.orange_texture)
+                break;
+            case "mango":
+                let mango_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
+                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(1.5, 1.2,1.2));
+                this.shapes.mango.draw(context, program_state, mango_model_transform, this.materials.mango_texture)
+                break;
+        }
+    }
+
+    draw_half_fruit(context, program_state, translate, rotate, type) {
+        let outside_scale = vec4(0,0,0,0)
+        let inside_scale = vec4(0,0,0,0)
+        let outside_shape, outside_texture, inside_shape, inside_texture = 0
+        switch(type){
+            case "apple":
+                outside_scale = vec4(1, 1, 1)
+                inside_scale = vec4(1, 1, 1)
+                outside_shape = this.shapes.apple
+                outside_texture = this.materials.half_apple_texture
+                inside_shape = this.shapes.apple_inside
+                inside_texture = this.materials.apple_inside_texture
+                break;
+            case "peach":
+                outside_scale = vec4(1, 1, 1)
+                inside_scale = vec4(1, 1, 1)
+                outside_shape = this.shapes.peach
+                outside_texture = this.materials.half_peach_texture
+                inside_shape = this.shapes.peach_inside
+                inside_texture = this.materials.peach_inside_texture
+                break;
+            case "watermelon":
+                this.shapes.watermelon.arrays.texture_coord.forEach(
+                    (v, i, l) => {
+                        v[0] = v[0] * 2
+                    }
+                )
+                outside_scale = vec4(2, 2.5, 2)
+                inside_scale = vec4(2, 2, 2)
+                outside_shape = this.shapes.watermelon
+                outside_texture = this.materials.half_watermelon_texture
+                inside_shape = this.shapes.watermelon_inside
+                inside_texture = this.materials.watermelon_inside_texture
+                break;
+            case "orange":
+                this.shapes.orange.arrays.texture_coord.forEach(
+                    (v, i, l) => {
+                        v[0] = v[0] * 10
+                        v[1] = v[1] * 10
+                    }
+                )
+                outside_scale = vec4(1, 1, 1)
+                inside_scale = vec4(1, 1, 1)
+                outside_shape = this.shapes.orange
+                outside_texture = this.materials.half_orange_texture
+                inside_shape = this.shapes.orange_inside
+                inside_texture = this.materials.orange_inside_texture
+                break;
+            case "mango":
+                outside_scale = vec4(1.5, 1.2, 1.2)
+                inside_scale = vec4(1.5, 1.2, 1)
+                outside_shape = this.shapes.mango
+                outside_texture = this.materials.half_mango_texture
+                inside_shape = this.shapes.mango_inside
+                inside_texture = this.materials.mango_inside_texture
+                break;
+        }
+
+        let half_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
+            .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(outside_scale[0], outside_scale[1],outside_scale[2]));
+        outside_shape.draw(context, program_state, half_model_transform, outside_texture);
+
+        let inside_transform = Mat4.translation(translate[0], translate[1], translate[2])
+            .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3]))
+            .times(Mat4.rotation(Math.PI/2, 1, 0,0)).times(Mat4.scale(inside_scale[0], inside_scale[1],inside_scale[2]));
+        inside_shape.draw(context, program_state, inside_transform, inside_texture)
+    }
+
     display(context, program_state) {
         super.display(context, program_state);
         const blue = hex_color("#1a9ffa");
         let model_transform = Mat4.identity();
         let t = program_state.animation_time;
+
+        //draw background
+        let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
+
+        this.shapes.background.draw(context, program_state, background_model_transform, this.materials.background_texture)
 
         this.rng_spawn(context, program_state, t);
 
@@ -324,25 +683,33 @@ export class Fruit_Gravity extends Base_Scene {
 
                     object.position = position
                     object.ver_vel = object.init_ver_vel - object.gravity * (t - start_time) / 1000
+                    object.rot_angle = vec4(animation_process * 30, .3, .6, .2)
 
                     let random = Math.random() * 10
-                    console.log(random)
-                    if(object.type === "fruit" && random > 9.5 && Math.abs(object.ver_vel) < 2)
-                    {
-                        this.split_object(context, program_state, object)
-                        this.animation_active_queue.splice(i, 1)
-                        i--
-                    }
-                    else
-                    {
-                        let model_trans = Mat4.translation(position[0], position[1], position[2])
-                            .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
 
-                        if(object.type === "fruit")
-                            this.shapes.cube.draw(context, program_state, model_trans, this.materials.plastic.override({color:object.color}));
+                    // if(object.type !== "bomb" && random > 9.5 && Math.abs(object.ver_vel) < 2)
+                    // {
+                    //     this.split_object(context, program_state, object)
+                    //     this.animation_active_queue.splice(i, 1)
+                    //     i--
+                    // }
+                    // else
+                    // {
+                        // let model_trans = Mat4.translation(position[0], position[1], position[2])
+                        //     .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
+
+                        if(object.type !== "bomb") {
+                            let angle = vec4(animation_process * 30, .3, .6, .2);
+                            this.draw_fruit(context, program_state, position, angle, object.type);
+                        }
                         else
-                            this.shapes.bomb.draw(context, program_state, model_trans, this.materials.plastic.override({color:object.color}));
-                    }
+                        {
+                             let model_trans = Mat4.translation(position[0], position[1], position[2])
+                                 .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
+                            this.shapes.bomb.draw(context, program_state, model_trans, this.materials.bomb_texture);
+                        }
+
+                    //}
                 }
             }
         }
@@ -367,7 +734,9 @@ export class Fruit_Gravity extends Base_Scene {
                     let model_trans = Mat4.translation(position[0], position[1], position[2])
                         .times(Mat4.rotation(split_object.rot_dir * animation_process * 20, .3, .6, .2)).times(Mat4.scale(0.5, 1, 1))
 
-                    this.shapes.cube.draw(context, program_state, model_trans, this.materials.plastic.override({color:split_object.color}));
+                    console.log(split_object.init_rot_angle)
+                    let angle = vec4(split_object.rot_dir * animation_process * 20 + split_object.init_rot_angle, .3, .6, .2);
+                    this.draw_half_fruit(context, program_state, position, angle, split_object.type);
                 }
             }
         }
@@ -388,5 +757,35 @@ export class Fruit_Gravity extends Base_Scene {
         let border_trans = Mat4.identity()
         border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
         this.shapes.border.draw(context, program_state, border_trans, this.white, "LINES");
+    }
+}
+
+class Hemi_Sphere extends Textured_Phong {
+    constructor(scale) {
+        super();
+        this.scale = scale
+    }
+    // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #7.
+    fragment_glsl_code() {
+        return this.shared_glsl_code() + `
+            varying vec2 f_tex_coord;
+            uniform sampler2D texture;
+            uniform float animation_time;
+            void main(){
+                // Sample the texture image in the correct place:
+                vec4 tex_color = texture2D( texture, f_tex_coord);
+                
+                // black out half of fruit
+                float v = f_tex_coord.y/${this.scale + ".0"};
+                if (v >= 0.5) {
+                    tex_color = vec4(0, 0, 0, 0.0);
+                }
+                
+                if( tex_color.w < .01 ) discard;
+                                                                         // Compute an initial (ambient) color:
+                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                                                                         // Compute the final color with contributions from lights:
+                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
+        } `;
     }
 }
