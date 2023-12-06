@@ -27,6 +27,7 @@ export class Body {
         this.previous = {center: this.center.copy(), rotation: this.rotation.copy()};
         // drawn_location gets replaced with an interpolated quantity:
         this.drawn_location = location_matrix;
+        //this.position = location_matrix;
         this.temp_matrix = Mat4.identity();
         return Object.assign(this, {linear_velocity, angular_velocity, spin_axis})
     }
@@ -57,7 +58,10 @@ export class Body {
         // blend_state(): Compute the final matrix we'll draw using the previous two physical
         // locations the object occupied.  We'll interpolate between these two states as
         // described at the end of the "Fix Your Timestep!" blog post.
-        this.drawn_location = Mat4.translation(...this.previous.center.mix(this.center, alpha))
+        // this.drawn_location = Mat4.translation(...this.previous.center.mix(this.center, alpha))
+        //     .times(this.blend_rotation(alpha))
+        //     .times(Mat4.scale(...this.size));
+        this.position = Mat4.translation(...this.previous.center.mix(this.center, alpha))
             .times(this.blend_rotation(alpha))
             .times(Mat4.scale(...this.size));
     }
@@ -69,13 +73,46 @@ export class Body {
         // through a list of discrete sphere points to see if the ellipsoids intersect is *really* a
         // hack (there are perfectly good analytic expressions that can test if two ellipsoids
         // intersect without discretizing them into points).
+        //console.log("Entering check_if_colliding");
+
+
         if (this == b)
             return false;
+
+        // if (!b || !b.drawn_location || !b.inverse) {
+        //     console.error("Invalid matrix or missing properties in body:", b);
+        //     return false;
+        // }
+        // if (!b) {
+        //     console.error("Invalid body: null or undefined");
+        //     return false;
+        // }
+
+        // Log the properties of the body object
+        //console.log("Body properties:", b);
+
+        // if (!(b.inverse instanceof Matrix) || b.inverse.rows !== 4 || b.inverse.cols !== 4) {
+        //     console.error("Invalid inverse matrix:", b.inverse);
+        //     return false;
+        // }
         // Nothing collides with itself.
         // Convert sphere b to the frame where a is a unit sphere:
-        const T = this.inverse.times(b.drawn_location, this.temp_matrix);
+        //console.log(b)
+        //console.log("this.inverse:", this.inverse);
+        //console.log("b.drawn_location:", b.drawn_location);
+        //const T = this.inverse.times(b.drawn_location, this.temp_matrix); //ORIGINAL
+        const T = this.inverse.times(pos, this.temp_matrix);
+        // if (!T) {
+        //     console.error("Invalid matrix after transformation:", T);
+        //     return false;
+        // }
+
 
         const {intersect_test, points, leeway} = collider;
+        // if (!points || !points.arrays || !points.arrays.position) {
+        //     console.error("Invalid points structure:", points);
+        //     return false;
+        // }
         // For each vertex in that b, shift to the coordinate frame of
         // a_inv*b.  Check if in that coordinate frame it penetrates
         // the unit sphere at the origin.  Leave some leeway.
@@ -148,6 +185,7 @@ export class Simulation extends Scene {
         // Draw each shape at its current location:
         for (let b of this.bodies)
             b.shape.draw(context, program_state, b.drawn_location, b.material);
+            //b.shape.draw(context, program_state, b.position, b.material);
     }
 
     update_state(dt)      // update_state(): Your subclass of Simulation has to override this abstract function.
@@ -350,6 +388,8 @@ export class Collision_Demo extends Simulation {
         const size = vec3(1 + leeway, 1 + leeway, 1 + leeway);
         for (let b of this.bodies)
             points.draw(context, program_state, b.drawn_location.times(Mat4.scale(...size)), this.bright, "LINE_STRIP");
+            //points.draw(context, program_state, b.position.times(Mat4.scale(...size)), this.bright, "LINE_STRIP");
+
     }
 
     show_explanation(document_element) {
