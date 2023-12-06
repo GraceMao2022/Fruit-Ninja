@@ -89,6 +89,7 @@ class Base_Scene extends Scene {
             'mango_inside': new defs.Regular_2D_Polygon(30, 30),
             'bomb': new Subdivision_Sphere(4),
             'background': new Square(),
+            'start_background': new Square()
         };
 
         // *** Materials
@@ -185,6 +186,11 @@ class Base_Scene extends Scene {
                 ambient: 1.0,
                 specularity: 0.0,
                 texture: new Texture("assets/cutting_board.jpg", "LINEAR_MIPMAP_LINEAR")}),
+            start_background_texture: new Material(new Textured_Phong(),{
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 0.0,
+                texture: new Texture("assets/start_menu.png", "LINEAR_MIPMAP_LINEAR")}),
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
@@ -218,6 +224,8 @@ export class Fruit_Gravity extends Base_Scene {
      */
     constructor(){
         super();
+        this.gameStarted = false;
+
         this.animation_active_queue = [];
         this.animation_inactive_queue = [];
 
@@ -253,6 +261,9 @@ export class Fruit_Gravity extends Base_Scene {
         this.is_wave_spawning = true
         this.spawn_number = 1
         this.indiv_spawn_timer = 1
+
+
+
     }
 
     make_control_panel() {
@@ -370,18 +381,27 @@ export class Fruit_Gravity extends Base_Scene {
                 //if mouse position is within object, split it
                 if(object.type === "watermelon")
                 {
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1)
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1){
+                        this.score++;
                         this.split_object(context, program_state, object)
+                    }
+
                 }
                 else if(object.type === "mango")
                 {
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.7)
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.7){
+                        this.score++;
                         this.split_object(context, program_state, object)
+                    }
+
                 }
                 else
                 {
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.5)
-                        this.split_object(context, program_state, object)
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.5){
+                        this.reset_game();
+                        this.split_object(context, program_state, object);
+                    }
+
                 }
 
                 
@@ -680,57 +700,69 @@ export class Fruit_Gravity extends Base_Scene {
         let model_transform = Mat4.identity();
         let t = program_state.animation_time;
 
-        //draw background
-        let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
 
-        this.shapes.background.draw(context, program_state, background_model_transform, this.materials.background_texture)
 
-        this.rng_spawn(context, program_state, t);
+        if(!this.gameStarted){
+            //draw background
+            let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
 
-        let canvas = context.canvas;
+            this.shapes.background.draw(context, program_state, background_model_transform, this.materials.start_background_texture)
 
-        const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
-            vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
-                (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
 
-        canvas.addEventListener("mousedown", e => {
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect()
-            this.my_mouse_down(e, mouse_position(e, rect), context, program_state);
+        }
+        else{
+            //draw background
+            let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
 
-        });
+            this.shapes.background.draw(context, program_state, background_model_transform, this.materials.background_texture)
 
-        if (this.animation_active_queue.length > 0) {
-            for (let i = 0; i < this.animation_active_queue.length; i++) {
-                let object = this.animation_active_queue[i];
+            this.rng_spawn(context, program_state, t);
 
-                let from = object.from;
+            let canvas = context.canvas;
 
-                let start_time = object.start_time;
-                let end_time = object.end_time;
+            const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
+                vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
+                    (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
 
-                if (t <= end_time && t >= start_time) {
-                    let animation_process = (t - start_time) / (end_time - start_time);
-                    let position = vec4(0,0,0,1.0)
+            canvas.addEventListener("mousedown", e => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect()
+                this.my_mouse_down(e, mouse_position(e, rect), context, program_state);
 
-                    position[0] = from[0] + object.init_hor_vel * (t - start_time) / 1000
-                    position[1] = from[1] + object.init_ver_vel * (t - start_time) / 1000 -
-                        0.5 * object.gravity * ((t - start_time) / 1000) ** 2;
+            });
 
-                    object.position = position
-                    object.ver_vel = object.init_ver_vel - object.gravity * (t - start_time) / 1000
-                    object.rot_angle = vec4(animation_process * 30, .3, .6, .2)
 
-                    let random = Math.random() * 10
+            if (this.animation_active_queue.length > 0) {
+                for (let i = 0; i < this.animation_active_queue.length; i++) {
+                    let object = this.animation_active_queue[i];
 
-                    // if(object.type !== "bomb" && random > 9.5 && Math.abs(object.ver_vel) < 2)
-                    // {
-                    //     this.split_object(context, program_state, object)
-                    //     this.animation_active_queue.splice(i, 1)
-                    //     i--
-                    // }
-                    // else
-                    // {
+                    let from = object.from;
+
+                    let start_time = object.start_time;
+                    let end_time = object.end_time;
+
+                    if (t <= end_time && t >= start_time) {
+                        let animation_process = (t - start_time) / (end_time - start_time);
+                        let position = vec4(0,0,0,1.0)
+
+                        position[0] = from[0] + object.init_hor_vel * (t - start_time) / 1000
+                        position[1] = from[1] + object.init_ver_vel * (t - start_time) / 1000 -
+                            0.5 * object.gravity * ((t - start_time) / 1000) ** 2;
+
+                        object.position = position
+                        object.ver_vel = object.init_ver_vel - object.gravity * (t - start_time) / 1000
+                        object.rot_angle = vec4(animation_process * 30, .3, .6, .2)
+
+                        let random = Math.random() * 10
+
+                        // if(object.type !== "bomb" && random > 9.5 && Math.abs(object.ver_vel) < 2)
+                        // {
+                        //     this.split_object(context, program_state, object)
+                        //     this.animation_active_queue.splice(i, 1)
+                        //     i--
+                        // }
+                        // else
+                        // {
                         // let model_trans = Mat4.translation(position[0], position[1], position[2])
                         //     .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
 
@@ -740,60 +772,63 @@ export class Fruit_Gravity extends Base_Scene {
                         }
                         else
                         {
-                             let model_trans = Mat4.translation(position[0], position[1], position[2])
-                                 .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
+                            let model_trans = Mat4.translation(position[0], position[1], position[2])
+                                .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
                             this.shapes.bomb.draw(context, program_state, model_trans, this.materials.bomb_texture);
                         }
 
-                    //}
+                        //}
+                    }
                 }
             }
-        }
-        if (this.animation_inactive_queue.length > 0) {
-            for (let i = 0; i < this.animation_inactive_queue.length; i++) {
-                let split_object = this.animation_inactive_queue[i];
+            if (this.animation_inactive_queue.length > 0) {
+                for (let i = 0; i < this.animation_inactive_queue.length; i++) {
+                    let split_object = this.animation_inactive_queue[i];
 
-                let from = split_object.from;
+                    let from = split_object.from;
 
-                let start_time = split_object.start_time;
-                let end_time = split_object.end_time;
+                    let start_time = split_object.start_time;
+                    let end_time = split_object.end_time;
 
-                if (t <= end_time && t >= start_time) {
-                    let animation_process = (t - start_time) / (end_time - start_time);
-                    let position = vec4(0,0,0,1.0)
+                    if (t <= end_time && t >= start_time) {
+                        let animation_process = (t - start_time) / (end_time - start_time);
+                        let position = vec4(0,0,0,1.0)
 
-                    position[0] = from[0] + split_object.init_hor_vel * (t - start_time) / 1000
-                    position[1] = from[1] + split_object.init_ver_vel * (t - start_time) / 1000 -
-                        0.5 * split_object.gravity * ((t - start_time) / 1000) ** 2;
+                        position[0] = from[0] + split_object.init_hor_vel * (t - start_time) / 1000
+                        position[1] = from[1] + split_object.init_ver_vel * (t - start_time) / 1000 -
+                            0.5 * split_object.gravity * ((t - start_time) / 1000) ** 2;
 
 
-                    let model_trans = Mat4.translation(position[0], position[1], position[2])
-                        .times(Mat4.rotation(split_object.rot_dir * animation_process * 20, .3, .6, .2)).times(Mat4.scale(0.5, 1, 1))
+                        let model_trans = Mat4.translation(position[0], position[1], position[2])
+                            .times(Mat4.rotation(split_object.rot_dir * animation_process * 20, .3, .6, .2)).times(Mat4.scale(0.5, 1, 1))
 
-                    console.log(split_object.init_rot_angle)
-                    let angle = vec4(split_object.rot_dir * animation_process * 20 + split_object.init_rot_angle, .3, .6, .2);
-                    this.draw_half_fruit(context, program_state, position, angle, split_object.type);
+                        console.log(split_object.init_rot_angle)
+                        let angle = vec4(split_object.rot_dir * animation_process * 20 + split_object.init_rot_angle, .3, .6, .2);
+                        this.draw_half_fruit(context, program_state, position, angle, split_object.type);
+                    }
                 }
             }
+            // remove finished animation
+            while (this.animation_active_queue.length > 0 || this.animation_inactive_queue.length > 0) {
+                if ((this.animation_active_queue.length > 0 && t > this.animation_active_queue[0].end_time) ||
+                    (this.animation_inactive_queue.length > 0 && t > this.animation_inactive_queue[0].end_time)) {
+                    if(this.animation_active_queue.length > 0 && t > this.animation_active_queue[0].end_time)
+                        this.animation_active_queue.shift();
+                    if(this.animation_inactive_queue.length > 0 && t > this.animation_inactive_queue[0].end_time)
+                        this.animation_inactive_queue.shift();
+                }
+                else {
+                    break;
+                }
+            }
+
+            let border_trans = Mat4.identity()
+            border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
+            this.shapes.border.draw(context, program_state, border_trans, this.white, "LINES");
         }
-        // remove finished animation
-        while (this.animation_active_queue.length > 0 || this.animation_inactive_queue.length > 0) {
-            if ((this.animation_active_queue.length > 0 && t > this.animation_active_queue[0].end_time) ||
-                (this.animation_inactive_queue.length > 0 && t > this.animation_inactive_queue[0].end_time)) {
-                if(this.animation_active_queue.length > 0 && t > this.animation_active_queue[0].end_time)
-                    this.animation_active_queue.shift();
-                if(this.animation_inactive_queue.length > 0 && t > this.animation_inactive_queue[0].end_time)
-                    this.animation_inactive_queue.shift();
-            }
-            else {
-                break;
-            }
         }
 
-        let border_trans = Mat4.identity()
-        border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
-        this.shapes.border.draw(context, program_state, border_trans, this.white, "LINES");
-    }
+
 }
 
 class Hemi_Sphere extends Textured_Phong {
