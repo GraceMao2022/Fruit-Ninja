@@ -225,6 +225,7 @@ export class Fruit_Gravity extends Base_Scene {
     constructor(){
         super();
         this.gameStarted = false;
+        this.score = 0;
 
         this.animation_active_queue = [];
         this.animation_inactive_queue = [];
@@ -404,7 +405,7 @@ export class Fruit_Gravity extends Base_Scene {
 
                 }
 
-                
+
                 this.animation_active_queue.splice(i, 1)
                 i--
                 //maybe do ray casting here? you can use position[0] and position[1] to get
@@ -698,6 +699,11 @@ export class Fruit_Gravity extends Base_Scene {
 
         let score = document.getElementById("score")
         score.innerHTML = this.score;
+
+        // if(!this.gameStarted){
+        //     let start = document.getElementById("start_menu")
+        //     //start_menu.innerHTML = th
+        // }
     }
 
     display(context, program_state) {
@@ -712,7 +718,7 @@ export class Fruit_Gravity extends Base_Scene {
             //draw background
             let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
 
-            this.shapes.background.draw(context, program_state, background_model_transform, this.materials.start_background_texture)
+            this.shapes.background.draw(context, program_state, background_model_transform, this.materials.background_texture)
 
 
         }
