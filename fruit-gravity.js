@@ -226,6 +226,11 @@ export class Fruit_Gravity extends Base_Scene {
         this.min_rest_timer = 2
         this.max_rest_timer = 5
 
+        this.game_left_border = -23
+        this.game_right_border = 23
+        this.game_top_border = 23
+        this.game_bottom_border = -3
+
         this.min_spawn_number = 1
         this.max_spawn_number = 4
         this.min_indiv_spawn_timer = 0.5
@@ -363,7 +368,9 @@ export class Fruit_Gravity extends Base_Scene {
                         this.split_object(context, program_state, object)
                 }
 
-
+                
+                this.animation_active_queue.splice(i, 1)
+                i--
                 //maybe do ray casting here? you can use position[0] and position[1] to get
                 //x,y of mouse click in world space
 
@@ -663,6 +670,30 @@ export class Fruit_Gravity extends Base_Scene {
         this.shapes.background.draw(context, program_state, background_model_transform, this.materials.background_texture)
 
         this.rng_spawn(context, program_state, t);
+
+        let canvas = context.canvas;
+
+        const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
+            vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
+                (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
+
+        canvas.addEventListener("mousedown", e => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect()
+            // console.log("e.clientX: " + e.clientX);
+            // console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
+            // console.log("e.clientY: " + e.clientY);
+            // console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
+            // console.log("mouse_position(e): " + mouse_position(e));
+            // this.my_mouse_down(e, mouse_position(e), context, program_state);
+
+
+            //const mouse_pos = mouse_position(e, rect);
+            //this.my_mouse_down(e, mouse_pos, context, program_state);
+
+            this.my_mouse_down(e, mouse_position(e, rect), context, program_state);
+
+        });
 
         if (this.animation_active_queue.length > 0) {
             for (let i = 0; i < this.animation_active_queue.length; i++) {
