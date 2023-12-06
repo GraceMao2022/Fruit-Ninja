@@ -89,7 +89,8 @@ class Base_Scene extends Scene {
             'mango_inside': new defs.Regular_2D_Polygon(30, 30),
             'bomb': new Subdivision_Sphere(4),
             'background': new Square(),
-            'start_background': new Square()
+            'start_background': new Square(),
+            'game_over_background': new Square()
         };
 
         // *** Materials
@@ -191,6 +192,11 @@ class Base_Scene extends Scene {
                 ambient: 1.0,
                 specularity: 0.0,
                 texture: new Texture("assets/start_menu.png", "LINEAR_MIPMAP_LINEAR")}),
+           game_over_background_texture: new Material(new Textured_Phong(),{
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 0.0,
+                texture: new Texture("assets/over.png", "LINEAR_MIPMAP_LINEAR")}),
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
@@ -225,6 +231,7 @@ export class Fruit_Gravity extends Base_Scene {
     constructor(){
         super();
         this.gameStarted = false;
+        this.pause = true;
         this.score = 0;
 
         this.animation_active_queue = [];
@@ -270,16 +277,21 @@ export class Fruit_Gravity extends Base_Scene {
     make_control_panel() {
         this.key_triggered_button("Start Game", ['Enter'], () =>{
             this.gameStarted = true;
+            this.pause = !this.pause;
+            this.gameOver = !this.gameOver;
         });
     }
 
-    reset_game(){
-        this.score = 0;
-        this.gameStarted = false;
-        this.gameOver = false;
-        this.stopped = true;
-        // this.mainscreen = true;
-        this.gameStarted = false;
+
+
+    display_game_over(context, program_state){
+        console.log("GAMEOVER")
+        this.gameOver = true;
+        let model_transform = Mat4.identity();
+        let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
+
+        this.shapes.background.draw(context, program_state, background_model_transform, this.materials.game_over_background_texture)
+
 
     }
 
@@ -306,7 +318,7 @@ export class Fruit_Gravity extends Base_Scene {
         let world_space_pos = pos_world_near
         world_space_pos[0] = world_space_pos[0]/0.74*this.game_right_border
         world_space_pos[1] = (world_space_pos[1] - 10)/((10.4 - 9.6)/2)*((this.game_top_border - this.game_bottom_border)/2) + 10
-        console.log("world_space_mouse_pos: " + world_space_pos)
+        //console.log("world_space_mouse_pos: " + world_space_pos)
 
         this.detect_cut_fruit(context, program_state, world_space_pos)
 
@@ -317,13 +329,16 @@ export class Fruit_Gravity extends Base_Scene {
         if (this.animation_active_queue.length > 0) {
             for (let i = 0; i < this.animation_active_queue.length; i++) {
                 let object = this.animation_active_queue[i];
+
                 let objectSplit = false;
+                //console.log("click")
 
                 //get object's current center position using object.position
                 //if mouse position is within object, split it
                 if(object.type === "watermelon")
                 {
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.5){ //was 1
+                    console.log("DISTANCE WATERMELON: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 2.2){ //was 1 --> 1.9 -->
                         this.score++;
                         objectSplit = true;
                         this.split_object(context, program_state, object)
@@ -332,7 +347,9 @@ export class Fruit_Gravity extends Base_Scene {
                 }
                 else if(object.type === "mango")
                 {
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.9){ //was 0.7
+                    //console.log("DISTANCE MANGO: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
+
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.1){ //was 0.7 --> .99
                         this.score++;
                         objectSplit = true;
                         this.split_object(context, program_state, object)
@@ -340,14 +357,20 @@ export class Fruit_Gravity extends Base_Scene {
 
                 }
                 else if(object.type === "bomb"){
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.8){ //was 0.5
+                    //console.log("DISTANCE BOMB: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
+
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.1){ //was 0.5-->/95
                         objectSplit = true;
-                        this.reset_game();
+                        this.display_game_over(context, program_state)
+
                     }
                 }
                 else
                 {
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.8){ //was 0.5
+                    //console.log("DISTANCE: OTHER " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
+
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1){ //was 0.5 --> .95
+                        this.score++;
                         objectSplit = true;
                         this.split_object(context, program_state, object);
                     }
@@ -662,15 +685,24 @@ export class Fruit_Gravity extends Base_Scene {
 
 
 
-        if(!this.gameStarted){
+        if(!this.gameStarted || !this.pause){
             //draw background
             let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
 
             this.shapes.background.draw(context, program_state, background_model_transform, this.materials.background_texture)
+            //this.shapes.background.draw(context, program_state, background_model_transform, this.materials.game_over_background_texture)
+
 
 
         }
+        else  if(this.gameOver){
+            let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(15,15,1)) //x=30
+            this.shapes.background.draw(context, program_state, background_model_transform, this.materials.game_over_background_texture);
+            this.score = 0;
+            //this.gameOver = !this.gameOver;
+        }
         else{
+
             //draw background
             let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
 
@@ -695,6 +727,7 @@ export class Fruit_Gravity extends Base_Scene {
             if (this.animation_active_queue.length > 0) {
                 for (let i = 0; i < this.animation_active_queue.length; i++) {
                     let object = this.animation_active_queue[i];
+                    console.log("OBJECT: "+ object.type)
 
                     let from = object.from;
 
@@ -762,7 +795,7 @@ export class Fruit_Gravity extends Base_Scene {
                         let model_trans = Mat4.translation(position[0], position[1], position[2])
                             .times(Mat4.rotation(split_object.rot_dir * animation_process * 20, .3, .6, .2)).times(Mat4.scale(0.5, 1, 1))
 
-                        console.log(split_object.init_rot_angle)
+                        //console.log(split_object.init_rot_angle)
                         let angle = vec4(split_object.rot_dir * animation_process * 20 + split_object.init_rot_angle, .3, .6, .2);
                         this.draw_half_fruit(context, program_state, position, angle, split_object.type);
                     }
