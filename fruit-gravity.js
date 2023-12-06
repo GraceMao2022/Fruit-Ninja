@@ -255,6 +255,22 @@ export class Fruit_Gravity extends Base_Scene {
         this.indiv_spawn_timer = 1
     }
 
+    make_control_panel() {
+        this.key_triggered_button("Start Game", ['Enter'], () =>{
+            this.gameStarted = true;
+        });
+    }
+
+    reset_game(){
+        this.score = 0;
+        this.gameStarted = false;
+        this.gameOver = false;
+        this.stopped = true;
+        // this.mainscreen = true;
+        this.gameStarted = false;
+
+    }
+
     my_mouse_down(e, pos, context, program_state){
         console.log("Helper");
 
@@ -680,17 +696,6 @@ export class Fruit_Gravity extends Base_Scene {
         canvas.addEventListener("mousedown", e => {
             e.preventDefault();
             const rect = canvas.getBoundingClientRect()
-            // console.log("e.clientX: " + e.clientX);
-            // console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
-            // console.log("e.clientY: " + e.clientY);
-            // console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
-            // console.log("mouse_position(e): " + mouse_position(e));
-            // this.my_mouse_down(e, mouse_position(e), context, program_state);
-
-
-            //const mouse_pos = mouse_position(e, rect);
-            //this.my_mouse_down(e, mouse_pos, context, program_state);
-
             this.my_mouse_down(e, mouse_position(e, rect), context, program_state);
 
         });
