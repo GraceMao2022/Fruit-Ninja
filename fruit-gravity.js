@@ -277,8 +277,8 @@ export class Fruit_Gravity extends Base_Scene {
     make_control_panel() {
         this.key_triggered_button("Start Game", ['Enter'], () =>{
             this.gameStarted = true;
-            this.pause = !this.pause;
-            this.gameOver = !this.gameOver;
+            //this.pause = !this.pause;
+            this.gameOver = false;
         });
     }
 
@@ -685,7 +685,7 @@ export class Fruit_Gravity extends Base_Scene {
 
 
 
-        if(!this.gameStarted || !this.pause){
+        if(!this.gameStarted ){
             //draw background
             let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
 
