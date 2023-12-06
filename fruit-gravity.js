@@ -309,67 +309,7 @@ export class Fruit_Gravity extends Base_Scene {
         console.log("world_space_mouse_pos: " + world_space_pos)
 
         this.detect_cut_fruit(context, program_state, world_space_pos)
-        // Get ray
-        // const ray_direction = pos_world_far.minus(pos_world_near).normalized();
-        //
-        // // Check if the ray intersects with oriented bounding box of each fruit
-        // // http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
-        // let nearest_intersecting_cube = null;
-        // let nearest_intersecting_distance = Infinity;
-        // let cube = this.shapes.cube;
-        //
-        // let tMin = 0;
-        // let tMax = Infinity;
-        // let intersection = true;
-        //
-        // const obb_position_worldspace = vec3(cube.model_transform[0][3], cube.model_transform[1][3], cube.model_transform[2][3]);
-        //     const delta = obb_position_worldspace.minus(pos_world_near.to3());
-        //     for (let i = 0; i < 3; i++) {
-        //         const axis = vec3(cube.model_transform[0][i], cube.model_transform[1][i], cube.model_transform[2][i]); // columns or rows?
-        //         const e = axis.dot(delta);
-        //         const f = axis.dot(ray_direction.to3());
-        //         let t1 = (e + cube.aabb_min[i]) / f;
-        //         let t2 = (e + cube.aabb_max[i]) / f;
-        //         // console.log("aabb_min: ");
-        //         // console.log(cube.aabb_min[i]+e);
-        //         // console.log("aabb_max: ");
-        //         // console.log(cube.aabb_min[i]+e);
-        //         if (t1 > t2) {
-        //             let temp = t1;
-        //             t1 = t2;
-        //             t2 = temp;
-        //             //console.log("false? 1");
-        //         }
-        //         if (t2 < tMax) {
-        //             tMax = t2;
-        //             //console.log("false? 2");
-        //         }
-        //         if (t1 > tMin) {
-        //             tMin = t1;
-        //             //console.log("false? 3");
-        //         }
-        //     }
-        //     if (tMax < tMin) {
-        //         //console.log("false? 4");
-        //         intersection = false;
-        //     }
-        //     if (intersection && tMin < nearest_intersecting_distance) {
-        //         nearest_intersecting_cube = cube;
-        //         nearest_intersecting_distance = tMin;
-        //         console.log("true?");
-        //     }
-        //
-        // if (nearest_intersecting_cube !== null && !nearest_intersecting_cube.has_been_clicked) {
-        //     console.log("reached");
-        //     nearest_intersecting_cube.has_been_clicked = true;
-        //     if (nearest_intersecting_cube.shape === this.shapes.bomb) {
-        //         console.log("BOMB DETECTED");
-        //     }
-        //     else{
-        //         console.log("FRUIT TOUCHED");
-        //          this.score++;
-        //     }
-        // }
+
     }
     //ADDED
 
@@ -396,10 +336,14 @@ export class Fruit_Gravity extends Base_Scene {
                     }
 
                 }
+                else if(object.type === "bomb"){
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.5){
+                        this.reset_game();
+                    }
+                }
                 else
                 {
                     if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.5){
-                        this.reset_game();
                         this.split_object(context, program_state, object);
                     }
 
@@ -417,9 +361,6 @@ export class Fruit_Gravity extends Base_Scene {
 
                 //all objects that are where mouse is when clicked should be split/explode if it is a bomb,
                 //not just the first object
-
-
-
 
 
             }
