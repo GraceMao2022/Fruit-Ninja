@@ -284,7 +284,7 @@ export class Fruit_Gravity extends Base_Scene {
     }
 
     my_mouse_down(e, pos, context, program_state){
-        console.log("Helper");
+       // console.log("Helper");
 
         // The ray is drawn from the near point to far point
         let pos_ndc_near = vec4(pos[0], pos[1], -1.0, 1.0); // normalized device coords of mouse on near plane
@@ -317,41 +317,48 @@ export class Fruit_Gravity extends Base_Scene {
         if (this.animation_active_queue.length > 0) {
             for (let i = 0; i < this.animation_active_queue.length; i++) {
                 let object = this.animation_active_queue[i];
+                let objectSplit = false;
 
                 //get object's current center position using object.position
                 //if mouse position is within object, split it
                 if(object.type === "watermelon")
                 {
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1){
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.5){ //was 1
                         this.score++;
+                        objectSplit = true;
                         this.split_object(context, program_state, object)
                     }
 
                 }
                 else if(object.type === "mango")
                 {
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.7){
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.9){ //was 0.7
                         this.score++;
+                        objectSplit = true;
                         this.split_object(context, program_state, object)
                     }
 
                 }
                 else if(object.type === "bomb"){
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.5){
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.8){ //was 0.5
+                        objectSplit = true;
                         this.reset_game();
                     }
                 }
                 else
                 {
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.5){
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 0.8){ //was 0.5
+                        objectSplit = true;
                         this.split_object(context, program_state, object);
                     }
 
                 }
 
+                if(objectSplit){
+                    this.animation_active_queue.splice(i, 1)
+                    i--
+                }
 
-                this.animation_active_queue.splice(i, 1)
-                i--
                 //maybe do ray casting here? you can use position[0] and position[1] to get
                 //x,y of mouse click in world space
 
