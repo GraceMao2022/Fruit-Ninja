@@ -213,7 +213,7 @@ class Base_Scene extends Scene {
                 color: hex_color("#000000"),
                 ambient: 1.0,
                 specularity: 0.0,
-                texture: new Texture("assets/sword.png", "LINEAR_MIPMAP_LINEAR")}),
+                texture: new Texture("assets/mistsplitter.png", "LINEAR_MIPMAP_LINEAR")}),
             background_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
@@ -303,11 +303,12 @@ export class Fruit_Gravity extends Base_Scene {
         this.spawn_number = 1
         this.indiv_spawn_timer = 1
 
+        this.fruit_percentage = 7
+        this.maj_spawn_count = 1
+
         this.back_music = new Audio("assets/fnmusic.mp3");
         this.back_music.loop = false;
         this.back_music.volume = 0.1;
-
-
 
         this.bomb_sound = new Audio("assets/explosion.mp3");
         this.bomb_sound.volume = 0.1;
@@ -337,6 +338,14 @@ export class Fruit_Gravity extends Base_Scene {
             //this.pause = !this.pause;
             this.gameOver = false;
             this.back_music.play();
+        });
+        this.key_triggered_button("Secret Mode On", ['1'], () =>{
+            this.fruit_percentage = 10
+            this.maj_spawn_count = 100
+        });
+        this.key_triggered_button("Secret Mode Off", ['2'], () =>{
+            this.fruit_percentage = 7
+            this.maj_spawn_count = 1
         });
     }
 
@@ -383,11 +392,6 @@ export class Fruit_Gravity extends Base_Scene {
 
     }
 
-    draw_sword(context, program_state, pos){
-        let sword_model_transform = Mat4.translation(0, 0, -1).times(Mat4.scale(10, 10,1));
-        console.log(sword_model_transform)
-        this.shapes.sword.draw(context, program_state, sword_model_transform, this.materials.watermelon_texture)
-    }
     //ADDED
 
     detect_cut_fruit(context, program_state, position){
@@ -403,7 +407,7 @@ export class Fruit_Gravity extends Base_Scene {
                 if(object.type === "watermelon")
                 {
                     //console.log("DISTANCE WATERMELON: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 2.2){ //was 1 --> 1.9 -->
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 2.7){ //was 1 --> 1.9 -->
                         this.score++;
                         objectSplit = true;
                         this.knife_sound.play();
@@ -415,7 +419,7 @@ export class Fruit_Gravity extends Base_Scene {
                 {
                     //console.log("DISTANCE MANGO: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
 
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.1){ //was 0.7 --> .99
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.6){ //was 0.7 --> .99
                         this.score++;
                         objectSplit = true;
                         this.knife_sound.play();
@@ -426,7 +430,7 @@ export class Fruit_Gravity extends Base_Scene {
                 else if(object.type === "bomb"){
                     //console.log("DISTANCE BOMB: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
 
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.1){ //was 0.5-->/95
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.6){ //was 0.5-->/95
                         objectSplit = true;
                         this.bomb_sound.play();
                         this.display_game_over(context, program_state)
@@ -437,7 +441,7 @@ export class Fruit_Gravity extends Base_Scene {
                 {
                     //console.log("DISTANCE: OTHER " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
 
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1){ //was 0.5 --> .95
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.5){ //was 0.5 --> .95
                         this.score++;
                         objectSplit = true;
                         this.knife_sound.play();
@@ -472,15 +476,15 @@ export class Fruit_Gravity extends Base_Scene {
 
     generate_type_fruit() {
         let random = Math.random() * 10
-        if(random < 8)
+        if(random < this.fruit_percentage)
         {
-            if(random < 1.6)
+            if(random < this.fruit_percentage/5)
                 return "apple"
-            else if(random < 3.2)
+            else if(random < 2*this.fruit_percentage/5)
                 return "peach"
-            else if(random < 4.8)
+            else if(random < 3*this.fruit_percentage/5)
                 return "watermelon"
-            else if(random < 6.4)
+            else if(random < 4*this.fruit_percentage/5)
                 return "orange"
             else
                 return "mango"
@@ -534,13 +538,15 @@ export class Fruit_Gravity extends Base_Scene {
         else if((this.indiv_spawn_timer - (currSecond - this.indiv_cycle_start)) < 0.1){
             let spawn_roll =  Math.random() * 10
             if(spawn_roll < 7.5)
-                this.spawn_number = 1
+                this.spawn_number = this.maj_spawn_count
             else if(spawn_roll < 8.5)
                 this.spawn_number = 2
-            else if(spawn_roll < 9.5)
+            else if(spawn_roll < 9.1)
                 this.spawn_number = 3
-            else
+            else if(spawn_roll < 9.6)
                 this.spawn_number = 4
+            else
+                this.spawn_number = 20
             this.indiv_cycle_start = currSecond
             this.indiv_spawn_timer = this.min_indiv_spawn_timer + Math.random() * (this.max_indiv_spawn_timer - this.min_indiv_spawn_timer)
         }
