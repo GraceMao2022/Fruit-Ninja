@@ -433,7 +433,7 @@ export class Fruit_Gravity extends Base_Scene {
                 else if (object.type === "bomb") {
                     //console.log("DISTANCE BOMB: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
 
-                    if (Math.sqrt((object.position[0] - position[0]) ** 2 + (object.position[1] - position[1]) ** 2) <= 2.5) { //was 0.5-->/95
+                    if (Math.sqrt((object.position[0] - position[0]) ** 2 + (object.position[1] - position[1]) ** 2) <= 2.2) { //was 0.5-->/95
                         objectSplit = true;
                         this.bomb_sound.play();
                         this.display_game_over(context, program_state)
@@ -879,8 +879,11 @@ export class Fruit_Gravity extends Base_Scene {
                             //.times(Mat4.rotation(animation_process * 30, .3, .6, .2)).times((Mat4.scale(2,2,2))
                             let model_trans = Mat4.translation(position[0], position[1], position[2])
                                 .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
-                                .times(Mat4.scale(2.3, 2.3, 2.3));
-                            this.shapes.bomb.draw(context, program_state, model_trans, this.materials.bomb_texture);
+                                .times(Mat4.scale(2, 2, 2));
+                            if(t/1000 % 1 < 0.5)
+                                this.shapes.bomb.draw(context, program_state, model_trans, this.materials.bomb_texture);
+                            else
+                                this.shapes.bomb.draw(context, program_state, model_trans, this.materials.bomb_texture.override({color: color(1,0,0,1)}));
                         }
 
                         //}
