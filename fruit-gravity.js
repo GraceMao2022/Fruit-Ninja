@@ -795,7 +795,7 @@ export class Fruit_Gravity extends Base_Scene {
                                 //.times(Mat4.rotation(animation_process * 30, .3, .6, .2)).times((Mat4.scale(2,2,2))
                             let model_trans = Mat4.translation(position[0], position[1], position[2])
                                 .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
-                                .times(Mat4.scale(1.5, 1.5, 1.5));
+                                .times(Mat4.scale(2.3, 2.3, 2.3));
                             this.shapes.bomb.draw(context, program_state, model_trans, this.materials.bomb_texture);
                         }
 
