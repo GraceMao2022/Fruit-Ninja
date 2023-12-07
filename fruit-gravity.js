@@ -744,7 +744,7 @@ export class Fruit_Gravity extends Base_Scene {
                     case "peach":
                         texture = this.materials.peach_splatter_texture
                         model_transform = Mat4.translation(splatter.position[0], splatter.position[1], splatter.position[2])
-                            .times(Mat4.scale(2, 2, 1))
+                            .times(Mat4.scale(3, 3, 1))
                         break
                     case "apple":
                         texture = this.materials.apple_splatter_texture
