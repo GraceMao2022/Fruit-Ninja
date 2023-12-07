@@ -376,7 +376,7 @@ export class Fruit_Gravity extends Base_Scene {
                 else if(object.type === "bomb"){
                     //console.log("DISTANCE BOMB: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
 
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 2.2){ //was 0.5-->/95
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 2.5){ //was 0.5-->/95
                         objectSplit = true;
                         this.bomb_sound.play();
                         this.display_game_over(context, program_state)
