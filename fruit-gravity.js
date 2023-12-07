@@ -270,6 +270,19 @@ export class Fruit_Gravity extends Base_Scene {
         this.spawn_number = 1
         this.indiv_spawn_timer = 1
 
+        this.back_music = new Audio("assets/fnmusic.mp3");
+        this.back_music.loop = false;
+        this.back_music.volume = 0.1;
+
+
+
+        this.bomb_sound = new Audio("assets/explosion.mp3");
+        this.bomb_sound.volume = 0.1;
+
+        this.knife_sound = new Audio("assets/knife-crop.mp3");
+        this.knife_sound.volume = 0.1;
+
+
 
 
     }
@@ -279,6 +292,7 @@ export class Fruit_Gravity extends Base_Scene {
             this.gameStarted = true;
             //this.pause = !this.pause;
             this.gameOver = false;
+            this.back_music.play();
         });
     }
 
@@ -341,6 +355,7 @@ export class Fruit_Gravity extends Base_Scene {
                     if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 2.2){ //was 1 --> 1.9 -->
                         this.score++;
                         objectSplit = true;
+                        this.knife_sound.play();
                         this.split_object(context, program_state, object)
                     }
 
@@ -352,6 +367,7 @@ export class Fruit_Gravity extends Base_Scene {
                     if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.1){ //was 0.7 --> .99
                         this.score++;
                         objectSplit = true;
+                        this.knife_sound.play();
                         this.split_object(context, program_state, object)
                     }
 
@@ -361,6 +377,7 @@ export class Fruit_Gravity extends Base_Scene {
 
                     if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.1){ //was 0.5-->/95
                         objectSplit = true;
+                        this.bomb_sound.play();
                         this.display_game_over(context, program_state)
 
                     }
@@ -372,6 +389,7 @@ export class Fruit_Gravity extends Base_Scene {
                     if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1){ //was 0.5 --> .95
                         this.score++;
                         objectSplit = true;
+                        this.knife_sound.play();
                         this.split_object(context, program_state, object);
                     }
 
@@ -699,6 +717,10 @@ export class Fruit_Gravity extends Base_Scene {
             let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(15,15,1)) //x=30
             this.shapes.background.draw(context, program_state, background_model_transform, this.materials.game_over_background_texture);
             this.score = 0;
+            ~this.back_music;
+            this.back_music = new Audio("fnmusic.mp3");
+            this.back_music.loop = false;
+            this.back_music.volume = 0.05;
             //this.gameOver = !this.gameOver;
         }
         else{
