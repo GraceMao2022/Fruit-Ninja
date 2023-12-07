@@ -543,7 +543,7 @@ export class Fruit_Gravity extends Base_Scene {
                 this.spawn_number = 2
             else if (spawn_roll < 9.1)
                 this.spawn_number = 3
-            else if (spawn_roll < 9.6)
+            else if (spawn_roll < 9.9)
                 this.spawn_number = 4
             else
                 this.spawn_number = 20
