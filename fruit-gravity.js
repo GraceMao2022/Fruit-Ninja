@@ -207,11 +207,11 @@ class Base_Scene extends Scene {
         // some initial setup.
 
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
-        if (!context.scratchpad.controls) {
-            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
-            // Define the global camera and projection matrices, which are stored in program_state.
+        // if (!context.scratchpad.controls) {
+        //     this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+        //     // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(Mat4.translation(0, -10, -30));
-        }
+        // }
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 100);
 
@@ -376,7 +376,7 @@ export class Fruit_Gravity extends Base_Scene {
                 else if(object.type === "bomb"){
                     //console.log("DISTANCE BOMB: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
 
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.1){ //was 0.5-->/95
+                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 2.2){ //was 0.5-->/95
                         objectSplit = true;
                         this.bomb_sound.play();
                         this.display_game_over(context, program_state)
@@ -470,7 +470,6 @@ export class Fruit_Gravity extends Base_Scene {
         let currSecond = t/1000
 
         if((currSecond - this.indiv_cycle_start) < 0.1) {
-            console.log("CURRSECOND")
             while(this.spawn_number > 0)
             {
                 let init_hor_pos = this.min_spawn_pos + Math.random() * (this.max_spawn_pos - this.min_spawn_pos)
@@ -485,7 +484,6 @@ export class Fruit_Gravity extends Base_Scene {
             }
         }
         else if((this.indiv_spawn_timer - (currSecond - this.indiv_cycle_start)) < 0.1){
-            console.log("OTHER SPAWN")
             let spawn_roll =  Math.random() * 10
             if(spawn_roll < 7.5)
                 this.spawn_number = 1
@@ -743,8 +741,9 @@ export class Fruit_Gravity extends Base_Scene {
                 vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
                     (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
 
-            canvas.addEventListener("mousedown", e => {
-                e.preventDefault();
+            canvas.addEventListener("mousemove", e => { //was "mousedown"
+                //e.preventDefault();
+                e.stopPropagation();
                 const rect = canvas.getBoundingClientRect()
                 this.my_mouse_down(e, mouse_position(e, rect), context, program_state);
 
@@ -792,8 +791,11 @@ export class Fruit_Gravity extends Base_Scene {
                         }
                         else
                         {
+                            //let model_trans = Mat4.translation(position[0], position[1], position[2])
+                                //.times(Mat4.rotation(animation_process * 30, .3, .6, .2)).times((Mat4.scale(2,2,2))
                             let model_trans = Mat4.translation(position[0], position[1], position[2])
                                 .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
+                                .times(Mat4.scale(1.5, 1.5, 1.5));
                             this.shapes.bomb.draw(context, program_state, model_trans, this.materials.bomb_texture);
                         }
 
