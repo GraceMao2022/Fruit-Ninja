@@ -1,9 +1,9 @@
-import {defs, tiny} from './examples/common.js';
+import { defs, tiny } from './examples/common.js';
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
 } = tiny;
-const {Triangle, Square, Tetrahedron, Windmill, Subdivision_Sphere, Textured_Phong} = defs;
+const { Triangle, Square, Tetrahedron, Windmill, Subdivision_Sphere, Textured_Phong } = defs;
 
 class Cube extends Shape {
     constructor() {
@@ -32,16 +32,16 @@ class Box extends Shape {
         // Note: since the outline is rendered with Basic_shader, you need to redefine the position and color of each vertex
         this.indices = false
         this.arrays.position = Vector3.cast(
-            [1,-1,-1], [-1, -1,-1],
-                [1, 1, -1], [-1, 1, -1],
+            [1, -1, -1], [-1, -1, -1],
+            [1, 1, -1], [-1, 1, -1],
             [-1, 1, -1], [-1, -1, -1],
             [1, 1, -1], [1, -1, -1]
-            );
+        );
         this.arrays.color = [
-            vec4(1,1,1,1), vec4(1,1,1,1),
-            vec4(1,1,1,1), vec4(1,1,1,1),
-            vec4(1,1,1,1), vec4(1,1,1,1),
-            vec4(1,1,1,1), vec4(1,1,1,1),
+            vec4(1, 1, 1, 1), vec4(1, 1, 1, 1),
+            vec4(1, 1, 1, 1), vec4(1, 1, 1, 1),
+            vec4(1, 1, 1, 1), vec4(1, 1, 1, 1),
+            vec4(1, 1, 1, 1), vec4(1, 1, 1, 1),
         ];
     }
 }
@@ -51,14 +51,14 @@ class Cube_Single_Strip extends Shape {
         super("position", "normal");
         // TODO (Requirement 6)
         this.arrays.position = Vector3.cast(
-            [-1,1,1],[-1,1,-1],[1,1,-1],[1,1,1],
-            [-1,-1,1],[-1,-1,-1],[1,-1,-1],[1,-1,1]
+            [-1, 1, 1], [-1, 1, -1], [1, 1, -1], [1, 1, 1],
+            [-1, -1, 1], [-1, -1, -1], [1, -1, -1], [1, -1, 1]
         );
         this.arrays.normal = Vector3.cast(
-            [-1,1,1],[-1,1,-1],[1,1,-1],[1,1,1],
-            [-1,-1,1],[-1,-1,-1],[1,-1,-1],[1,-1,1]
+            [-1, 1, 1], [-1, 1, -1], [1, 1, -1], [1, 1, 1],
+            [-1, -1, 1], [-1, -1, -1], [1, -1, -1], [1, -1, 1]
         );
-        this.indices.push(1,2,0,3,7,2,6,1,5,0,4,7,5,6)
+        this.indices.push(1, 2, 0, 3, 7, 2, 6, 1, 5, 0, 4, 7, 5, 6)
     }
 }
 
@@ -98,7 +98,7 @@ class Base_Scene extends Scene {
         // *** Materials
         this.materials = {
             plastic: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+                { ambient: .4, diffusivity: .6, color: hex_color("#ffffff") }),
             watermelon_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
@@ -208,27 +208,31 @@ class Base_Scene extends Scene {
                 texture: new Texture("assets/mango-splatter.png", "NEAREST")
             }),
             bomb_texture: new Material(new defs.Phong_Shader(),
-                {ambient: 1, specularity: 1, color: hex_color("#000000")}),
+                { ambient: 1, specularity: 1, color: hex_color("#000000") }),
             sword_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
                 specularity: 0.0,
-                texture: new Texture("assets/mistsplitter.png", "LINEAR_MIPMAP_LINEAR")}),
+                texture: new Texture("assets/mistsplitter.png", "LINEAR_MIPMAP_LINEAR")
+            }),
             background_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
                 specularity: 0.0,
-                texture: new Texture("assets/cutting_board.jpg", "LINEAR_MIPMAP_LINEAR")}),
-            start_background_texture: new Material(new Textured_Phong(),{
+                texture: new Texture("assets/cutting_board.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            start_background_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
                 specularity: 0.0,
-                texture: new Texture("assets/start_menu.png", "LINEAR_MIPMAP_LINEAR")}),
-           game_over_background_texture: new Material(new Textured_Phong(),{
+                texture: new Texture("assets/start_menu.png", "LINEAR_MIPMAP_LINEAR")
+            }),
+            game_over_background_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
                 specularity: 0.0,
-                texture: new Texture("assets/over.png", "LINEAR_MIPMAP_LINEAR")}),
+                texture: new Texture("assets/over.png", "LINEAR_MIPMAP_LINEAR")
+            }),
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
@@ -239,11 +243,11 @@ class Base_Scene extends Scene {
         // some initial setup.
 
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
-        if (!context.scratchpad.controls) {
-            //this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
-            // Define the global camera and projection matrices, which are stored in program_state.
-            program_state.set_camera(Mat4.translation(0, -10, -30));
-        }
+        // if (!context.scratchpad.controls) {
+        //     this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+        //     // Define the global camera and projection matrices, which are stored in program_state.
+        program_state.set_camera(Mat4.translation(0, -10, -30));
+        // }
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 100);
 
@@ -260,7 +264,7 @@ export class Fruit_Gravity extends Base_Scene {
      * This gives you a very small code sandbox for editing a simple scene, and for
      * experimenting with matrix transformations.
      */
-    constructor(){
+    constructor() {
         super();
         this.gameStarted = false;
         this.pause = true;
@@ -333,17 +337,18 @@ export class Fruit_Gravity extends Base_Scene {
     }
 
     make_control_panel() {
-        this.key_triggered_button("Start Game", ['Enter'], () =>{
+        this.key_triggered_button("Start Game", ['Enter'], () => {
             this.gameStarted = true;
             //this.pause = !this.pause;
             this.gameOver = false;
             this.back_music.play();
+            this.back_music.loop = true;
         });
-        this.key_triggered_button("Secret Mode On", ['1'], () =>{
+        this.key_triggered_button("Secret Mode On", ['1'], () => {
             this.fruit_percentage = 10
             this.maj_spawn_count = 100
         });
-        this.key_triggered_button("Secret Mode Off", ['2'], () =>{
+        this.key_triggered_button("Secret Mode Off", ['2'], () => {
             this.fruit_percentage = 7
             this.maj_spawn_count = 1
         });
@@ -351,31 +356,31 @@ export class Fruit_Gravity extends Base_Scene {
 
 
 
-    display_game_over(context, program_state){
+    display_game_over(context, program_state) {
         console.log("GAMEOVER")
         this.gameOver = true;
         let model_transform = Mat4.identity();
-        let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
+        let background_model_transform = Mat4.translation(0, 10, -5).times(Mat4.scale(30, 15, 1))
 
         this.shapes.background.draw(context, program_state, background_model_transform, this.materials.game_over_background_texture)
 
 
     }
 
-    my_mouse_down(e, pos, context, program_state){
-       // console.log("Helper");
+    my_mouse_down(e, pos, context, program_state) {
+        // console.log("Helper");
 
         // The ray is drawn from the near point to far point
         let pos_ndc_near = vec4(pos[0], pos[1], -1.0, 1.0); // normalized device coords of mouse on near plane
-        let pos_ndc_far  = vec4(pos[0], pos[1],  1.0, 1.0); // normalized device coords of mouse on far plane
+        let pos_ndc_far = vec4(pos[0], pos[1], 1.0, 1.0); // normalized device coords of mouse on far plane
         let center_ndc_near = vec4(0.0, 0.0, -1.0, 1.0); // normalized device coords of center of near plane
         let P = program_state.projection_transform; // eye space -> projection space
         let V = program_state.camera_inverse; // world space -> eye space
 
         // (PV)^-1 = (V^-1)(P^-1) which goes from projection space -> world space
         let pos_world_near = Mat4.inverse(P.times(V)).times(pos_ndc_near); // world space coords of mouse near plane
-        let pos_world_far  = Mat4.inverse(P.times(V)).times(pos_ndc_far); // world space coords of mouse far plane
-        let center_world_near  = Mat4.inverse(P.times(V)).times(center_ndc_near); // world space coords of center of near plane
+        let pos_world_far = Mat4.inverse(P.times(V)).times(pos_ndc_far); // world space coords of mouse far plane
+        let center_world_near = Mat4.inverse(P.times(V)).times(center_ndc_near); // world space coords of center of near plane
 
         // Perspective division
         pos_world_near.scale_by(1 / pos_world_near[3]);
@@ -383,8 +388,8 @@ export class Fruit_Gravity extends Base_Scene {
         center_world_near.scale_by(1 / center_world_near[3]);
 
         let world_space_pos = pos_world_near
-        world_space_pos[0] = world_space_pos[0]/0.74*this.game_right_border
-        world_space_pos[1] = (world_space_pos[1] - 10)/((10.4 - 9.6)/2)*((this.game_top_border - this.game_bottom_border)/2) + 10
+        world_space_pos[0] = world_space_pos[0] / 0.74 * this.game_right_border
+        world_space_pos[1] = (world_space_pos[1] - 10) / ((10.4 - 9.6) / 2) * ((this.game_top_border - this.game_bottom_border) / 2) + 10
         //console.log("world_space_mouse_pos: " + world_space_pos)
 
         this.detect_cut_fruit(context, program_state, world_space_pos)
@@ -394,7 +399,7 @@ export class Fruit_Gravity extends Base_Scene {
 
     //ADDED
 
-    detect_cut_fruit(context, program_state, position){
+    detect_cut_fruit(context, program_state, position) {
         if (this.animation_active_queue.length > 0) {
             for (let i = 0; i < this.animation_active_queue.length; i++) {
                 let object = this.animation_active_queue[i];
@@ -404,10 +409,9 @@ export class Fruit_Gravity extends Base_Scene {
 
                 //get object's current center position using object.position
                 //if mouse position is within object, split it
-                if(object.type === "watermelon")
-                {
+                if (object.type === "watermelon") {
                     //console.log("DISTANCE WATERMELON: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 2.7){ //was 1 --> 1.9 -->
+                    if (Math.sqrt((object.position[0] - position[0]) ** 2 + (object.position[1] - position[1]) ** 2) <= 2.7) { //was 1 --> 1.9 -->
                         this.score++;
                         objectSplit = true;
                         this.knife_sound.play();
@@ -415,11 +419,10 @@ export class Fruit_Gravity extends Base_Scene {
                     }
 
                 }
-                else if(object.type === "mango")
-                {
+                else if (object.type === "mango") {
                     //console.log("DISTANCE MANGO: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
 
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.6){ //was 0.7 --> .99
+                    if (Math.sqrt((object.position[0] - position[0]) ** 2 + (object.position[1] - position[1]) ** 2) <= 1.6) { //was 0.7 --> .99
                         this.score++;
                         objectSplit = true;
                         this.knife_sound.play();
@@ -427,21 +430,20 @@ export class Fruit_Gravity extends Base_Scene {
                     }
 
                 }
-                else if(object.type === "bomb"){
+                else if (object.type === "bomb") {
                     //console.log("DISTANCE BOMB: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
 
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.6){ //was 0.5-->/95
+                    if (Math.sqrt((object.position[0] - position[0]) ** 2 + (object.position[1] - position[1]) ** 2) <= 2.5) { //was 0.5-->/95
                         objectSplit = true;
                         this.bomb_sound.play();
                         this.display_game_over(context, program_state)
 
                     }
                 }
-                else
-                {
+                else {
                     //console.log("DISTANCE: OTHER " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
 
-                    if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 1.5){ //was 0.5 --> .95
+                    if (Math.sqrt((object.position[0] - position[0]) ** 2 + (object.position[1] - position[1]) ** 2) <= 1.5) { //was 0.5 --> .95
                         this.score++;
                         objectSplit = true;
                         this.knife_sound.play();
@@ -450,7 +452,7 @@ export class Fruit_Gravity extends Base_Scene {
 
                 }
 
-                if(objectSplit){
+                if (objectSplit) {
                     this.animation_active_queue.splice(i, 1)
                     i--
                 }
@@ -476,40 +478,39 @@ export class Fruit_Gravity extends Base_Scene {
 
     generate_type_fruit() {
         let random = Math.random() * 10
-        if(random < this.fruit_percentage)
-        {
-            if(random < this.fruit_percentage/5)
+        if (random < this.fruit_percentage) {
+            if (random < this.fruit_percentage / 5)
                 return "apple"
-            else if(random < 2*this.fruit_percentage/5)
+            else if (random < 2 * this.fruit_percentage / 5)
                 return "peach"
-            else if(random < 3*this.fruit_percentage/5)
+            else if (random < 3 * this.fruit_percentage / 5)
                 return "watermelon"
-            else if(random < 4*this.fruit_percentage/5)
+            else if (random < 4 * this.fruit_percentage / 5)
                 return "orange"
             else
                 return "mango"
         }
         return "bomb"
     }
-    rng_spawn(context, program_state, t){
-        let currSecond = t/1000
+    rng_spawn(context, program_state, t) {
+        let currSecond = t / 1000
         //levels of rng: wave timer, individual object spawn timer, spawn position,
         //hor vel (should be depending on spawn position), ver vel, type of object
 
         //spawn
-        if(this.is_wave_spawning)
-        {
-            if((currSecond - this.cycle_start) >= 0 && (currSecond - this.cycle_start) < this.wave_timer) {
+        if (this.is_wave_spawning) {
+            console.log("WAVE SPAWN")
+            if ((currSecond - this.cycle_start) >= 0 && (currSecond - this.cycle_start) < this.wave_timer) {
                 this.spawn_wave(context, program_state, t);
             }
-            else{
+            else {
                 this.is_wave_spawning = false
             }
         }
         //rest
-        else
-        {
-            if((currSecond - this.cycle_start) > (this.wave_timer + this.rest_timer)){
+        else {
+            console.log("rest")
+            if ((currSecond - this.cycle_start) > (this.wave_timer + this.rest_timer)) {
                 this.is_wave_spawning = true
                 this.cycle_start = currSecond
                 this.wave_timer = this.min_wave_timer + Math.random() * (this.max_wave_timer - this.min_wave_timer)
@@ -518,32 +519,31 @@ export class Fruit_Gravity extends Base_Scene {
         }
 
     }
-    spawn_wave(context, program_state, t){
-        let currSecond = t/1000
+    spawn_wave(context, program_state, t) {
+        let currSecond = t / 1000
 
-        if((currSecond - this.indiv_cycle_start) < 0.1) {
-            while(this.spawn_number > 0)
-            {
+        if ((currSecond - this.indiv_cycle_start) < 0.1) {
+            while (this.spawn_number > 0) {
                 let init_hor_pos = this.min_spawn_pos + Math.random() * (this.max_spawn_pos - this.min_spawn_pos)
                 let peak_hor_pos = this.min_peak_hor_pos + Math.random() * (this.max_peak_hor_pos - this.min_peak_hor_pos)
                 let peak_ver_pos = this.min_peak_ver_pos + Math.random() * (this.max_peak_ver_pos - this.min_peak_ver_pos)
 
                 let init_ver_vel = Math.sqrt(2 * this.gravity * (peak_ver_pos - (-10)))
-                let time_to_peak = init_ver_vel/(this.gravity)
-                let init_hor_vel = (peak_hor_pos - init_hor_pos)/time_to_peak
+                let time_to_peak = init_ver_vel / (this.gravity)
+                let init_hor_vel = (peak_hor_pos - init_hor_pos) / time_to_peak
                 this.spawn_object(context, program_state, this.generate_type_fruit(), vec4(init_hor_pos, -10.0, 0.0, 1.0), init_hor_vel, init_ver_vel)
                 this.spawn_number--;
             }
         }
-        else if((this.indiv_spawn_timer - (currSecond - this.indiv_cycle_start)) < 0.1){
-            let spawn_roll =  Math.random() * 10
-            if(spawn_roll < 7.5)
+        else if ((this.indiv_spawn_timer - (currSecond - this.indiv_cycle_start)) < 0.1) {
+            let spawn_roll = Math.random() * 10
+            if (spawn_roll < 7.5)
                 this.spawn_number = this.maj_spawn_count
-            else if(spawn_roll < 8.5)
+            else if (spawn_roll < 8.5)
                 this.spawn_number = 2
-            else if(spawn_roll < 9.1)
+            else if (spawn_roll < 9.1)
                 this.spawn_number = 3
-            else if(spawn_roll < 9.6)
+            else if (spawn_roll < 9.6)
                 this.spawn_number = 4
             else
                 this.spawn_number = 20
@@ -572,15 +572,15 @@ export class Fruit_Gravity extends Base_Scene {
         this.animation_active_queue.push(object)
     }
 
-    split_object(context, program_state, object){
-        let ver_random_dir = Math.floor(Math.random()*2)
-        if(ver_random_dir === 0)
+    split_object(context, program_state, object) {
+        let ver_random_dir = Math.floor(Math.random() * 2)
+        if (ver_random_dir === 0)
             ver_random_dir = -1
         else
             ver_random_dir = 1
 
-        let rot_random_dir = Math.floor(Math.random()*2)
-        if(rot_random_dir === 0)
+        let rot_random_dir = Math.floor(Math.random() * 2)
+        if (rot_random_dir === 0)
             rot_random_dir = -1
         else
             rot_random_dir = 1
@@ -617,41 +617,41 @@ export class Fruit_Gravity extends Base_Scene {
         this.spawn_splatter(context, program_state, object.position, object.type)
     }
 
-    draw_fruit(context, program_state, translate, rotate, type){
-        switch(type){
+    draw_fruit(context, program_state, translate, rotate, type) {
+        switch (type) {
             case "apple":
                 let apple_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
-                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(1, 1,1));
+                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2], rotate[3])).times(Mat4.scale(1, 1, 1));
                 this.shapes.apple.draw(context, program_state, apple_model_transform, this.materials.apple_texture)
                 break;
             case "peach":
                 let peach_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
-                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(1, 1,1));
+                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2], rotate[3])).times(Mat4.scale(1, 1, 1));
                 this.shapes.peach.draw(context, program_state, peach_model_transform, this.materials.peach_texture)
                 break;
             case "watermelon":
                 let watermelon_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
-                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(2, 2.5,2));
+                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2], rotate[3])).times(Mat4.scale(2, 2.5, 2));
                 this.shapes.watermelon.draw(context, program_state, watermelon_model_transform, this.materials.watermelon_texture)
                 break;
             case "orange":
                 let orange_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
-                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(1, 1,1));
+                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2], rotate[3])).times(Mat4.scale(1, 1, 1));
                 this.shapes.orange.draw(context, program_state, orange_model_transform, this.materials.orange_texture)
                 break;
             case "mango":
                 let mango_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
-                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(1.5, 1.2,1.2));
+                    .times(Mat4.rotation(rotate[0], rotate[1], rotate[2], rotate[3])).times(Mat4.scale(1.5, 1.2, 1.2));
                 this.shapes.mango.draw(context, program_state, mango_model_transform, this.materials.mango_texture)
                 break;
         }
     }
 
     draw_half_fruit(context, program_state, translate, rotate, type) {
-        let outside_scale = vec4(0,0,0,0)
-        let inside_scale = vec4(0,0,0,0)
+        let outside_scale = vec4(0, 0, 0, 0)
+        let inside_scale = vec4(0, 0, 0, 0)
         let outside_shape, outside_texture, inside_shape, inside_texture = 0
-        switch(type){
+        switch (type) {
             case "apple":
                 outside_scale = vec4(1, 1, 1)
                 inside_scale = vec4(1, 1, 1)
@@ -706,12 +706,12 @@ export class Fruit_Gravity extends Base_Scene {
         }
 
         let half_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
-            .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(outside_scale[0], outside_scale[1],outside_scale[2]));
+            .times(Mat4.rotation(rotate[0], rotate[1], rotate[2], rotate[3])).times(Mat4.scale(outside_scale[0], outside_scale[1], outside_scale[2]));
         outside_shape.draw(context, program_state, half_model_transform, outside_texture);
 
         let inside_transform = Mat4.translation(translate[0], translate[1], translate[2])
-            .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3]))
-            .times(Mat4.rotation(Math.PI/2, 1, 0,0)).times(Mat4.scale(inside_scale[0], inside_scale[1],inside_scale[2]));
+            .times(Mat4.rotation(rotate[0], rotate[1], rotate[2], rotate[3]))
+            .times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(inside_scale[0], inside_scale[1], inside_scale[2]));
         inside_shape.draw(context, program_state, inside_transform, inside_texture)
     }
 
@@ -727,10 +727,10 @@ export class Fruit_Gravity extends Base_Scene {
 
     draw_splatters(context, program_state) {
         let model_transform, texture = 0
-        if(this.splatter_queue.length > 0) {
+        if (this.splatter_queue.length > 0) {
             for (let i = 0; i < this.splatter_queue.length; i++) {
                 let splatter = this.splatter_queue[i]
-                switch(splatter.type){
+                switch (splatter.type) {
                     case "watermelon":
                         texture = this.materials.watermelon_splatter_texture
                         model_transform = Mat4.translation(splatter.position[0], splatter.position[1], splatter.position[2])
@@ -760,8 +760,7 @@ export class Fruit_Gravity extends Base_Scene {
 
                 this.shapes.splatter.draw(context, program_state, model_transform, texture)
                 splatter.time += 0.1
-                if(splatter.time > 10)
-                {
+                if (splatter.time > 10) {
                     this.splatter_queue.splice(i, 1)
                     i--
                 }
@@ -786,16 +785,15 @@ export class Fruit_Gravity extends Base_Scene {
         let model_transform = Mat4.identity();
         let t = program_state.animation_time;
 
-        if(this.mouse_pos)
-        {
-            let sword_model_transform = Mat4.translation(this.mouse_pos[0], this.mouse_pos[1], -1).times(Mat4.scale(2, 2,1));
+        if (this.mouse_pos) {
+            let sword_model_transform = Mat4.translation(this.mouse_pos[0], this.mouse_pos[1], -1).times(Mat4.scale(2, 2, 1));
             this.shapes.sword.draw(context, program_state, sword_model_transform, this.materials.sword_texture)
         }
 
 
-        if(!this.gameStarted ){
+        if (!this.gameStarted) {
             //draw background
-            let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
+            let background_model_transform = Mat4.translation(0, 10, -5).times(Mat4.scale(30, 15, 1))
 
             this.shapes.background.draw(context, program_state, background_model_transform, this.materials.background_texture)
             //this.shapes.background.draw(context, program_state, background_model_transform, this.materials.game_over_background_texture)
@@ -803,8 +801,8 @@ export class Fruit_Gravity extends Base_Scene {
 
 
         }
-        else  if(this.gameOver){
-            let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(15,15,1)) //x=30
+        else if (this.gameOver) {
+            let background_model_transform = Mat4.translation(0, 10, -5).times(Mat4.scale(15, 15, 1)) //x=30
             this.shapes.background.draw(context, program_state, background_model_transform, this.materials.game_over_background_texture);
             this.score = 0;
             ~this.back_music;
@@ -813,10 +811,10 @@ export class Fruit_Gravity extends Base_Scene {
             this.back_music.volume = 0.05;
             //this.gameOver = !this.gameOver;
         }
-        else{
+        else {
 
             //draw background
-            let background_model_transform = Mat4.translation(0,10,-5).times(Mat4.scale(30,15,1))
+            let background_model_transform = Mat4.translation(0, 10, -5).times(Mat4.scale(30, 15, 1))
 
             this.shapes.background.draw(context, program_state, background_model_transform, this.materials.background_texture)
 
@@ -828,9 +826,8 @@ export class Fruit_Gravity extends Base_Scene {
                 vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
                     (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
 
-
-            canvas.addEventListener("mousemove", e => {
-                e.preventDefault();
+            canvas.addEventListener("mousemove", e => { //was "mousedown"
+                //e.preventDefault();
                 e.stopPropagation();
                 const rect = canvas.getBoundingClientRect()
                 this.my_mouse_down(e, mouse_position(e, rect), context, program_state);
@@ -850,7 +847,7 @@ export class Fruit_Gravity extends Base_Scene {
 
                     if (t <= end_time && t >= start_time) {
                         let animation_process = (t - start_time) / (end_time - start_time);
-                        let position = vec4(0,0,0,1.0)
+                        let position = vec4(0, 0, 0, 1.0)
 
                         position[0] = from[0] + object.init_hor_vel * (t - start_time) / 1000
                         position[1] = from[1] + object.init_ver_vel * (t - start_time) / 1000 -
@@ -873,14 +870,16 @@ export class Fruit_Gravity extends Base_Scene {
                         // let model_trans = Mat4.translation(position[0], position[1], position[2])
                         //     .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
 
-                        if(object.type !== "bomb") {
+                        if (object.type !== "bomb") {
                             let angle = vec4(animation_process * 30, .3, .6, .2);
                             this.draw_fruit(context, program_state, position, angle, object.type);
                         }
-                        else
-                        {
+                        else {
+                            //let model_trans = Mat4.translation(position[0], position[1], position[2])
+                            //.times(Mat4.rotation(animation_process * 30, .3, .6, .2)).times((Mat4.scale(2,2,2))
                             let model_trans = Mat4.translation(position[0], position[1], position[2])
                                 .times(Mat4.rotation(animation_process * 30, .3, .6, .2))
+                                .times(Mat4.scale(2.3, 2.3, 2.3));
                             this.shapes.bomb.draw(context, program_state, model_trans, this.materials.bomb_texture);
                         }
 
@@ -899,7 +898,7 @@ export class Fruit_Gravity extends Base_Scene {
 
                     if (t <= end_time && t >= start_time) {
                         let animation_process = (t - start_time) / (end_time - start_time);
-                        let position = vec4(0,0,0,1.0)
+                        let position = vec4(0, 0, 0, 1.0)
 
                         position[0] = from[0] + split_object.init_hor_vel * (t - start_time) / 1000
                         position[1] = from[1] + split_object.init_ver_vel * (t - start_time) / 1000 -
@@ -919,9 +918,9 @@ export class Fruit_Gravity extends Base_Scene {
             while (this.animation_active_queue.length > 0 || this.animation_inactive_queue.length > 0) {
                 if ((this.animation_active_queue.length > 0 && t > this.animation_active_queue[0].end_time) ||
                     (this.animation_inactive_queue.length > 0 && t > this.animation_inactive_queue[0].end_time)) {
-                    if(this.animation_active_queue.length > 0 && t > this.animation_active_queue[0].end_time)
+                    if (this.animation_active_queue.length > 0 && t > this.animation_active_queue[0].end_time)
                         this.animation_active_queue.shift();
-                    if(this.animation_inactive_queue.length > 0 && t > this.animation_inactive_queue[0].end_time)
+                    if (this.animation_inactive_queue.length > 0 && t > this.animation_inactive_queue[0].end_time)
                         this.animation_inactive_queue.shift();
                 }
                 else {
@@ -932,11 +931,11 @@ export class Fruit_Gravity extends Base_Scene {
             this.draw_splatters(context, program_state)
 
             let border_trans = Mat4.identity()
-            border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
+            border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos) / 2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos) / 2, (this.max_peak_ver_pos - this.min_peak_ver_pos) / 2, 1))
             this.shapes.border.draw(context, program_state, border_trans, this.white, "LINES");
         }
         this.displayUI();
-        }
+    }
 
 
 }
