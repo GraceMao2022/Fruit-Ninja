@@ -844,9 +844,9 @@ export class Fruit_Gravity extends Base_Scene {
                 }
             }
 
-            let border_trans = Mat4.identity()
-            border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
-            this.shapes.border.draw(context, program_state, border_trans, this.white, "LINES");
+            // let border_trans = Mat4.identity()
+            // border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
+            // this.shapes.border.draw(context, program_state, border_trans, this.white, "LINES");
         }
         this.displayUI();
         }
