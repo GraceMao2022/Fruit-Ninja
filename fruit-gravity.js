@@ -293,6 +293,7 @@ export class Fruit_Gravity extends Base_Scene {
             //this.pause = !this.pause;
             this.gameOver = false;
             this.back_music.play();
+            this.back_music.loop = true;
         });
     }
 
@@ -444,6 +445,7 @@ export class Fruit_Gravity extends Base_Scene {
         //spawn
         if(this.is_wave_spawning)
         {
+            console.log("WAVE SPAWN")
             if((currSecond - this.cycle_start) >= 0 && (currSecond - this.cycle_start) < this.wave_timer) {
                 this.spawn_wave(context, program_state, t);
             }
@@ -454,6 +456,7 @@ export class Fruit_Gravity extends Base_Scene {
         //rest
         else
         {
+            console.log("rest")
             if((currSecond - this.cycle_start) > (this.wave_timer + this.rest_timer)){
                 this.is_wave_spawning = true
                 this.cycle_start = currSecond
@@ -467,6 +470,7 @@ export class Fruit_Gravity extends Base_Scene {
         let currSecond = t/1000
 
         if((currSecond - this.indiv_cycle_start) < 0.1) {
+            console.log("CURRSECOND")
             while(this.spawn_number > 0)
             {
                 let init_hor_pos = this.min_spawn_pos + Math.random() * (this.max_spawn_pos - this.min_spawn_pos)
@@ -481,6 +485,7 @@ export class Fruit_Gravity extends Base_Scene {
             }
         }
         else if((this.indiv_spawn_timer - (currSecond - this.indiv_cycle_start)) < 0.1){
+            console.log("OTHER SPAWN")
             let spawn_roll =  Math.random() * 10
             if(spawn_roll < 7.5)
                 this.spawn_number = 1
@@ -749,7 +754,7 @@ export class Fruit_Gravity extends Base_Scene {
             if (this.animation_active_queue.length > 0) {
                 for (let i = 0; i < this.animation_active_queue.length; i++) {
                     let object = this.animation_active_queue[i];
-                    console.log("OBJECT: "+ object.type)
+                    //console.log("OBJECT: "+ object.type)
 
                     let from = object.from;
 
