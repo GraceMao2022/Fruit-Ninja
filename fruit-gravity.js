@@ -87,7 +87,9 @@ class Base_Scene extends Scene {
             'apple_inside': new defs.Regular_2D_Polygon(30, 30),
             'mango': new Subdivision_Sphere(4),
             'mango_inside': new defs.Regular_2D_Polygon(30, 30),
+            'splatter': new Square(),
             'bomb': new Subdivision_Sphere(4),
+            'sword': new Square(),
             'background': new Square(),
             'start_background': new Square(),
             'game_over_background': new Square()
@@ -112,6 +114,11 @@ class Base_Scene extends Scene {
                 ambient: 1.0,
                 texture: new Texture("assets/watermelon_inside.jpeg", "NEAREST")
             }),
+            watermelon_splatter_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/red-splatter.png", "NEAREST")
+            }),
             orange_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
@@ -128,6 +135,11 @@ class Base_Scene extends Scene {
                 color: hex_color("#000000"),
                 ambient: 1.0,
                 texture: new Texture("assets/orange_inside.jpeg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            orange_splatter_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/orange-splatter.png", "NEAREST")
             }),
             peach_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
@@ -146,6 +158,11 @@ class Base_Scene extends Scene {
                 ambient: 1.0,
                 texture: new Texture("assets/peach_inside.jpg", "LINEAR_MIPMAP_LINEAR")
             }),
+            peach_splatter_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/peach_splatter.png", "NEAREST")
+            }),
             apple_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
@@ -162,6 +179,11 @@ class Base_Scene extends Scene {
                 color: hex_color("#000000"),
                 ambient: 1.0,
                 texture: new Texture("assets/apple_inside.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
+            apple_splatter_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/apple-splatter.png", "NEAREST")
             }),
             mango_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
@@ -180,8 +202,18 @@ class Base_Scene extends Scene {
                 ambient: 1.0,
                 texture: new Texture("assets/mango_inside.jpeg", "LINEAR_MIPMAP_LINEAR")
             }),
+            mango_splatter_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/mango-splatter.png", "NEAREST")
+            }),
             bomb_texture: new Material(new defs.Phong_Shader(),
                 {ambient: 1, specularity: 1, color: hex_color("#000000")}),
+            sword_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                specularity: 0.0,
+                texture: new Texture("assets/sword.png", "LINEAR_MIPMAP_LINEAR")}),
             background_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
@@ -208,7 +240,7 @@ class Base_Scene extends Scene {
 
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
-            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+            //this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(Mat4.translation(0, -10, -30));
         }
@@ -236,6 +268,7 @@ export class Fruit_Gravity extends Base_Scene {
 
         this.animation_active_queue = [];
         this.animation_inactive_queue = [];
+        this.splatter_queue = [];
 
         this.min_wave_timer = 2
         this.max_wave_timer = 4
@@ -283,7 +316,18 @@ export class Fruit_Gravity extends Base_Scene {
         this.knife_sound.volume = 0.1;
 
 
+        this.shapes.watermelon.arrays.texture_coord.forEach(
+            (v, i, l) => {
+                v[0] = v[0] * 2
+            }
+        )
 
+        this.shapes.orange.arrays.texture_coord.forEach(
+            (v, i, l) => {
+                v[0] = v[0] * 10
+                v[1] = v[1] * 10
+            }
+        )
 
     }
 
@@ -335,7 +379,14 @@ export class Fruit_Gravity extends Base_Scene {
         //console.log("world_space_mouse_pos: " + world_space_pos)
 
         this.detect_cut_fruit(context, program_state, world_space_pos)
+        this.mouse_pos = world_space_pos
 
+    }
+
+    draw_sword(context, program_state, pos){
+        let sword_model_transform = Mat4.translation(0, 0, -1).times(Mat4.scale(10, 10,1));
+        console.log(sword_model_transform)
+        this.shapes.sword.draw(context, program_state, sword_model_transform, this.materials.watermelon_texture)
     }
     //ADDED
 
@@ -351,7 +402,7 @@ export class Fruit_Gravity extends Base_Scene {
                 //if mouse position is within object, split it
                 if(object.type === "watermelon")
                 {
-                    console.log("DISTANCE WATERMELON: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
+                    //console.log("DISTANCE WATERMELON: " + Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2))
                     if(Math.sqrt((object.position[0] - position[0])**2 + (object.position[1] - position[1])**2) <= 2.2){ //was 1 --> 1.9 -->
                         this.score++;
                         objectSplit = true;
@@ -496,22 +547,6 @@ export class Fruit_Gravity extends Base_Scene {
 
     }
     spawn_object(context, program_state, type, from, init_hor_vel, init_ver_vel) {
-        // let pos_ndc_near = vec4(1.0, pos[1], -1.0, 1.0);
-        // //let pos_ndc_far  = vec4(pos[0], pos[1],  1.0, 1.0);
-        // let pos_ndc_far  = vec4(1.0, 0.5, 1.0, 1.0);
-        // console.log(pos_ndc_far)
-        // //let center_ndc_near = vec4(0.0, 0.0, -1.0, 1.0);
-        // let center_ndc_near = vec4(-1.0, 0.5, 1.0, 1.0);
-        // let P = program_state.projection_transform;
-        // let V = program_state.camera_inverse;
-        // let pos_world_near = Mat4.inverse(P.times(V)).times(pos_ndc_near);
-        // let pos_world_far  = Mat4.inverse(P.times(V)).times(pos_ndc_far);
-        // let center_world_near  = Mat4.inverse(P.times(V)).times(center_ndc_near);
-        // pos_world_near.scale_by(1 / pos_world_near[3]);
-        // pos_world_far.scale_by(1 / pos_world_far[3]);
-        // center_world_near.scale_by(1 / center_world_near[3]);
-        // console.log(pos_world_far);
-
         //Do whatever you want
         let object = {
             from: from,
@@ -572,8 +607,9 @@ export class Fruit_Gravity extends Base_Scene {
 
         this.animation_inactive_queue.push(split_object_1)
         this.animation_inactive_queue.push(split_object_2)
-    }
 
+        this.spawn_splatter(context, program_state, object.position, object.type)
+    }
 
     draw_fruit(context, program_state, translate, rotate, type){
         switch(type){
@@ -590,22 +626,11 @@ export class Fruit_Gravity extends Base_Scene {
             case "watermelon":
                 let watermelon_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
                     .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(2, 2.5,2));
-                this.shapes.watermelon.arrays.texture_coord.forEach(
-                    (v, i, l) => {
-                        v[0] = v[0] * 2
-                    }
-                )
                 this.shapes.watermelon.draw(context, program_state, watermelon_model_transform, this.materials.watermelon_texture)
                 break;
             case "orange":
                 let orange_model_transform = Mat4.translation(translate[0], translate[1], translate[2])
                     .times(Mat4.rotation(rotate[0], rotate[1], rotate[2],rotate[3])).times(Mat4.scale(1, 1,1));
-                this.shapes.orange.arrays.texture_coord.forEach(
-                    (v, i, l) => {
-                        v[0] = v[0] * 10
-                        v[1] = v[1] * 10
-                    }
-                )
                 this.shapes.orange.draw(context, program_state, orange_model_transform, this.materials.orange_texture)
                 break;
             case "mango":
@@ -684,6 +709,60 @@ export class Fruit_Gravity extends Base_Scene {
         inside_shape.draw(context, program_state, inside_transform, inside_texture)
     }
 
+    spawn_splatter(context, program_state, position, type) {
+        let splatter = {
+            position: vec4(position[0], position[1], -3 + Math.random()),
+            time: 0,
+            type: type,
+        }
+
+        this.splatter_queue.push(splatter)
+    }
+
+    draw_splatters(context, program_state) {
+        let model_transform, texture = 0
+        if(this.splatter_queue.length > 0) {
+            for (let i = 0; i < this.splatter_queue.length; i++) {
+                let splatter = this.splatter_queue[i]
+                switch(splatter.type){
+                    case "watermelon":
+                        texture = this.materials.watermelon_splatter_texture
+                        model_transform = Mat4.translation(splatter.position[0], splatter.position[1], splatter.position[2])
+                            .times(Mat4.scale(4, 4, 1))
+                        break
+                    case "orange":
+                        texture = this.materials.orange_splatter_texture
+                        model_transform = Mat4.translation(splatter.position[0], splatter.position[1], splatter.position[2])
+                            .times(Mat4.scale(2, 2, 1))
+                        break
+                    case "peach":
+                        texture = this.materials.peach_splatter_texture
+                        model_transform = Mat4.translation(splatter.position[0], splatter.position[1], splatter.position[2])
+                            .times(Mat4.scale(2, 2, 1))
+                        break
+                    case "apple":
+                        texture = this.materials.apple_splatter_texture
+                        model_transform = Mat4.translation(splatter.position[0], splatter.position[1], splatter.position[2])
+                            .times(Mat4.scale(2, 2, 1))
+                        break
+                    case "mango":
+                        texture = this.materials.mango_splatter_texture
+                        model_transform = Mat4.translation(splatter.position[0], splatter.position[1], splatter.position[2])
+                            .times(Mat4.scale(3, 3, 1))
+                        break
+                }
+
+                this.shapes.splatter.draw(context, program_state, model_transform, texture)
+                splatter.time += 0.1
+                if(splatter.time > 10)
+                {
+                    this.splatter_queue.splice(i, 1)
+                    i--
+                }
+            }
+        }
+    }
+
     displayUI() {
 
         let score = document.getElementById("score")
@@ -701,6 +780,11 @@ export class Fruit_Gravity extends Base_Scene {
         let model_transform = Mat4.identity();
         let t = program_state.animation_time;
 
+        if(this.mouse_pos)
+        {
+            let sword_model_transform = Mat4.translation(this.mouse_pos[0], this.mouse_pos[1], -1).times(Mat4.scale(2, 2,1));
+            this.shapes.sword.draw(context, program_state, sword_model_transform, this.materials.sword_texture)
+        }
 
 
         if(!this.gameStarted ){
@@ -738,8 +822,10 @@ export class Fruit_Gravity extends Base_Scene {
                 vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
                     (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
 
-            canvas.addEventListener("mousedown", e => {
+
+            canvas.addEventListener("mousemove", e => {
                 e.preventDefault();
+                e.stopPropagation();
                 const rect = canvas.getBoundingClientRect()
                 this.my_mouse_down(e, mouse_position(e, rect), context, program_state);
 
@@ -749,7 +835,7 @@ export class Fruit_Gravity extends Base_Scene {
             if (this.animation_active_queue.length > 0) {
                 for (let i = 0; i < this.animation_active_queue.length; i++) {
                     let object = this.animation_active_queue[i];
-                    console.log("OBJECT: "+ object.type)
+                    //console.log("OBJECT: "+ object.type)
 
                     let from = object.from;
 
@@ -836,6 +922,8 @@ export class Fruit_Gravity extends Base_Scene {
                     break;
                 }
             }
+
+            this.draw_splatters(context, program_state)
 
             let border_trans = Mat4.identity()
             border_trans = border_trans.times(Mat4.translation(0, (this.max_peak_ver_pos + this.min_peak_ver_pos)/2, 0)).times(Mat4.scale((this.max_peak_hor_pos - this.min_peak_hor_pos)/2, (this.max_peak_ver_pos - this.min_peak_ver_pos)/2, 1))
